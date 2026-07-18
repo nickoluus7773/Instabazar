@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import API_BASE_URL from "@/lib/api";
+import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -165,10 +166,13 @@ export default function LoginPage() {
           </form>
 
           <p className="text-center text-gray-500 mt-8 text-lg">
-            Don't have an account?
-            <span className="text-purple-600 font-semibold ml-2 cursor-pointer">
-              Sign up
-            </span>
+            Don&apos;t have an account?
+            <Link
+                href="/register"
+                className="text-purple-600 font-semibold ml-2 cursor-pointer"
+              >
+                Sign Up
+              </Link>
           </p>
         </div>
       </div>

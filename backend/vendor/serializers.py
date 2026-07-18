@@ -2,6 +2,8 @@ from rest_framework import serializers
 from .models import Vendor
 
 class VendorSerializer(serializers.ModelSerializer):
+    product_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Vendor
         fields = [
@@ -14,6 +16,7 @@ class VendorSerializer(serializers.ModelSerializer):
             'verification_status',
             'logo_url',
             'subscription_plan',
+            'product_count',
             'created_at',
             'updated_at',
         ]
@@ -21,6 +24,8 @@ class VendorSerializer(serializers.ModelSerializer):
 
 
 class VendorDetailSerializer(serializers.ModelSerializer):
+    product_count = serializers.IntegerField(read_only=True)
+
     class Meta:
         model = Vendor
         fields = [
@@ -34,6 +39,7 @@ class VendorDetailSerializer(serializers.ModelSerializer):
             'verification_status',
             'logo_url',
             'subscription_plan',
+            'product_count',
             'created_at',
             'updated_at',
         ]

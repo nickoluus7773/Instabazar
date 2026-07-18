@@ -68,7 +68,7 @@ export default function QuickLinks({ vendorSlug }) {
 
       {/* View Public Profile */}
       <Link
-        href={`/vendor/${vendorSlug}`}
+        href={`/vendors/${vendorSlug}`}
         className="glass rounded-2xl border border-white/40 shadow-sm p-5 card-hover flex items-center gap-4 group"
       >
         <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center group-hover:bg-emerald-200 transition-colors">

@@ -8,9 +8,10 @@ export function AuthProvider({ children }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("accessToken");
-
-    setIsLoggedIn(!!token);
+    const timer = window.setTimeout(() => {
+      setIsLoggedIn(Boolean(localStorage.getItem("accessToken")));
+    }, 0);
+    return () => window.clearTimeout(timer);
   }, []);
 
   const login = (token) => {

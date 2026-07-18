@@ -1,10 +1,26 @@
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from django.db.models import Count, Q
 from .models import Vendor
 from .serializers import VendorSerializer, VendorDetailSerializer
+
+
+class PublicVendorListView(viewsets.ReadOnlyModelViewSet):
+    """Read-only storefront API for vendors approved in Django admin."""
+    permission_classes = [AllowAny]
+    serializer_class = VendorSerializer
+    lookup_field = "store_slug"
+
+    def get_queryset(self):
+        return Vendor.objects.filter(
+            verification_status="verified"
+        ).annotate(product_count=Count("products"))
+
+
+class PublicVendorDetailView(PublicVendorListView):
+    serializer_class = VendorDetailSerializer
 
 class VendorViewSet(viewsets.ModelViewSet):
     """

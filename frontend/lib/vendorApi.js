@@ -1,10 +1,42 @@
 import API_BASE_URL from "@/lib/api";
 
+// PUBLIC VENDOR LIST
+export const getPublicVendors = async () => {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/vendor/public/`,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Failed to fetch vendors: ${response.status}`
+      );
+    }
+
+    return await response.json();
+
+  } catch (error) {
+    console.error(
+      "Failed to fetch public vendors:",  
+      error
+    );
+
+    throw error;
+  }
+};
+
+
 export const getVendorProfile = async (token) => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/vendor/profile/`, {
       method: "GET",
-      headers: {
+      headers: {  
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
@@ -114,10 +146,10 @@ export const updateProduct = async (token, productId, productData) => {
     const response = await fetch(`${API_BASE_URL}/api/vendor/products/${productId}/`, {
       method: "PUT",
       headers: {
-        "Content-Type": "application/json",
+        ...(productData instanceof FormData ? {} : { "Content-Type": "application/json" }),
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(productData),
+      body: productData instanceof FormData ? productData : JSON.stringify(productData),
     });
 
     if (!response.ok) {
@@ -148,6 +180,21 @@ export const deleteProduct = async (token, productId) => {
     return response.ok;
   } catch (error) {
     console.error("Failed to delete product:", error);
+    throw error;
+  }
+};
+export const getPublicVendorBySlug = async (slug) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/vendor/public/${slug}/`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!response.ok) {
+      throw new Error(`Error: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to fetch vendor detail:", error);
     throw error;
   }
 };

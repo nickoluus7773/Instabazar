@@ -16,6 +16,7 @@ export default function DashboardStats({ stats, subscriptionPlan }) {
               stroke="currentColor"
               strokeWidth="2"
               viewBox="0 0 24 24"
+              
             >
               <path
                 strokeLinecap="round"
