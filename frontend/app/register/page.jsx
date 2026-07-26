@@ -53,20 +53,36 @@ export default function RegisterPage() {
       }
     } catch (error) {
       console.error("Registration request failed:", error);
-      alert(`Unable to reach the backend server. Make sure Django is running on ${API_BASE_URL}.`);
+      alert(
+        `Unable to reach the backend server. Make sure Django is running on ${API_BASE_URL}.`,
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f7fb] flex items-center justify-center py-12 px-4">
+    <div
+      className="
+    min-h-screen
+    flex
+    items-center
+    justify-center
+    px-4
+    bg-center
+    bg-cover
+    bg-no-repeat
+  "
+      style={{
+        backgroundImage: "url('/images/login-bg.png')",
+      }}
+    >
       <div className="w-full max-w-md">
         {/* Logo */}
 
         <div className="text-center mb-8">
           <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto shadow-lg mb-4"
+            className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto shadow-lg mb-4 mt-1"
             style={{
               background: "linear-gradient(135deg,#8b5cf6,#ec4899,#f97316)",
             }}
@@ -74,9 +90,7 @@ export default function RegisterPage() {
             <span className="text-white font-black text-lg">IB</span>
           </div>
 
-          <h1 className="text-4xl font-bold text-gray-900">Create Account</h1>
-
-          <p className="text-gray-500 mt-2">Join InstaBazaar today</p>
+          <h1 className="text-3xl font-bold text-gray-900">Create Account</h1>
         </div>
 
         {/* Card */}

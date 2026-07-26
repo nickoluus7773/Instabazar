@@ -17,8 +17,9 @@ export default function CommunityPage() {
   useEffect(() => {
     const fetchCurrentUser = async () => {
       const token = localStorage.getItem("accessToken");
+      console.log(token);
 
-      const res = await fetch("http://127.0.0.1:8001/api/users/me/", {
+      const res = await fetch("http://127.0.0.1:8001/api/me/", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -114,8 +115,8 @@ export default function CommunityPage() {
             <button
               onClick={() => setShowGuidelines(true)}
               className="
-        w-8
-        h-8
+        w-9
+        h-9
         rounded-full
         bg-white/20
         text-white
@@ -123,7 +124,7 @@ export default function CommunityPage() {
         hover:bg-white/30
       "
             >
-              <FiInfo size={18} />
+              <FiInfo size={20} className="ms-2" />
             </button>
           </div>
         </div>
