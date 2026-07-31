@@ -11,10 +11,6 @@ export default function HeroSection() {
         <div className="grid md:grid-cols-2 gap-20 items-center">
           {/* Left Content */}
           <div>
-            <div className="inline-flex items-center gap-2 text-purple-600 font-semibold uppercase tracking-wide text-sm mb-6">
-              ✨ India's favourite indie marketplace
-            </div>
-
             <h1 className="text-5xl md:text-6xl font-bold leading-tight text-slate-900">
               Discover{" "}
               <span className="bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent italic">

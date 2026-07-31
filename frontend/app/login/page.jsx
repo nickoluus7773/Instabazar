@@ -45,19 +45,35 @@ export default function LoginPage() {
       }
     } catch (error) {
       console.error("Login request failed:", error);
-      alert(`Unable to reach the backend server. Make sure Django is running on ${API_BASE_URL}.`);
+      alert(
+        `Unable to reach the backend server. Make sure Django is running on ${API_BASE_URL}.`,
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#f5f7fb] flex items-center justify-center px-4">
+    <div
+      className="
+    min-h-screen
+    flex
+    items-center
+    justify-center
+    px-4
+    bg-center
+    bg-cover
+    bg-no-repeat
+  "
+      style={{
+        backgroundImage: "url('/images/login-bg.png')",
+      }}
+    >
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div
             className="
-              w-20 h-20
+              w-15 h-15
               rounded-3xl
               mx-auto
               flex items-center justify-center
@@ -73,11 +89,9 @@ export default function LoginPage() {
             IB
           </div>
 
-          <h1 className="text-6xl font-bold text-gray-900 mt-6">
+          <h3 className="text-5xl font-bold text-gray-900 mt-2">
             Welcome Back
-          </h1>
-
-          <p className="text-gray-500 text-xl mt-3">Sign in to your account</p>
+          </h3>
         </div>
 
         {/* Card */}
@@ -168,11 +182,11 @@ export default function LoginPage() {
           <p className="text-center text-gray-500 mt-8 text-lg">
             Don&apos;t have an account?
             <Link
-                href="/register"
-                className="text-purple-600 font-semibold ml-2 cursor-pointer"
-              >
-                Sign Up
-              </Link>
+              href="/register"
+              className="text-purple-600 font-semibold ml-2 cursor-pointer"
+            >
+              Sign Up
+            </Link>
           </p>
         </div>
       </div>
