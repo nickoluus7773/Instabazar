@@ -1,0 +1,19 @@
+info:
+  name: profile
+  type: http
+  seq: 1
+
+http:
+  method: GET
+  url: http://127.0.0.1:8001/api/profile/
+  headers:
+    - name: Authorization
+      value: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzg1NDM2OTgxLCJpYXQiOjE3ODU0MzY2ODEsImp0aSI6IjI3MzlkNDRjOWU5MDQzYTc4YWJiYjM4NmYwZTVhNzI1IiwidXNlcl9pZCI6IjYifQ.OGiVK716PdF-Lv5ZfT-IwnrMimc0hP-G1_nbKtd27VU
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+​

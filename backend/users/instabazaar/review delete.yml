@@ -1,0 +1,22 @@
+info:
+  name: review delete
+  type: http
+  seq: 1
+
+http:
+  method: PUT
+  url: http://127.0.0.1:8001/api/reviews/9
+  body:
+    type: json
+    data: |-
+      {
+          "message":"Updated review from Bruno"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
+​

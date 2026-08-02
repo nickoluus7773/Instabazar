@@ -1,10 +1,12 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
+  const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -22,6 +24,7 @@ export function AuthProvider({ children }) {
   const logout = () => {
     localStorage.removeItem("accessToken");
     setIsLoggedIn(false);
+    router.push("/");
   };
 
   return (

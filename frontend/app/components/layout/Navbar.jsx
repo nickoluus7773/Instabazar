@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-
 export default function Navbar() {
   const { isLoggedIn, logout } = useAuth();
 
@@ -24,9 +23,11 @@ export default function Navbar() {
         <div className="flex gap-3">
           {isLoggedIn ? (
             <>
-              <button className="w-10 h-10 rounded-full bg-purple-600 text-white">
-                👤
-              </button>
+              <Link href="/profile">
+                <button className="w-10 h-10 rounded-full border-2 border-purple-500 bg-white text-xl flex items-center justify-center hover:bg-purple-50 transition duration-200">
+                  👤
+                </button>
+              </Link>
 
               <button
                 onClick={logout}

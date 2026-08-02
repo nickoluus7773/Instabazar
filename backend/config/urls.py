@@ -23,5 +23,5 @@ urlpatterns = [
     path("api/", include("products.urls")),
 
     # Reviews
-    path("api/reviews/", include("reviews.urls")),
+    path("api/", include("reviews.urls")),
 ]
