@@ -177,6 +177,14 @@ export default function RegisterPage() {
             >
               {loading ? "Creating Account..." : "Create Account"}
             </button>
+
+            <button
+              type="button"
+              onClick={() => router.push("/register/vendor")}
+              className="w-full border border-purple-200 text-purple-700 font-semibold py-3 rounded-2xl hover:bg-purple-50 transition-all"
+            >
+              Sign up as Vendor
+            </button>
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-6">
