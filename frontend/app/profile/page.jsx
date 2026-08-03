@@ -41,7 +41,7 @@ export default function ProfilePage() {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const res = await axios.get("http://127.0.0.1:8001/api/profile/", {
+      const res = await axios.get("http://127.0.0.1:8000/api/profile/", {
         headers: {
           Authorization: `Bearer ${token}`,
         },

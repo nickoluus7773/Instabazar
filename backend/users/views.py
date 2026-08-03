@@ -5,8 +5,6 @@ from rest_framework.decorators import api_view,permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from .serializers import *
 
 from  users.models import UserProfile
@@ -43,10 +41,6 @@ def register_user(request):
         status=status.HTTP_201_CREATED
     )
 
-@receiver(post_save, sender=User)
-def create_profile(sender, instance, created, **kwargs):
-    if created:
-        UserProfile.objects.create(user=instance)
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -110,6 +104,7 @@ def delete_account(request):
     return Response(
         {"message": "Account deleted successfully."},
         status=200,
+    )
 
 @api_view(["POST"])
 def register_vendor(request):
