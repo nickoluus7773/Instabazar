@@ -1,0 +1,13 @@
+export { default as AboutHero } from "./AboutHero";
+export { default as OurStory } from "./OurStory";
+export { default as MissionVision } from "./MissionVision";
+export { default as CoreValues } from "./CoreValues";
+export { default as PlatformStats } from "./PlatformStats";
+export { default as WhyChooseUs } from "./WhyChooseUs";
+export { default as HowItWorks } from "./HowItWorks";
+export { default as Roadmap } from "./Roadmap";
+export { default as Features } from "./Features";
+export { default as Team } from "./Team";
+export { default as FAQ } from "./FAQ";
+export { default as PrimaryCTA } from "./PrimaryCTA";
+export { default as FooterCTA } from "./FooterCTA";
