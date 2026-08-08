@@ -2,14 +2,37 @@
 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import API_BASE_URL from "@/lib/api";
 
 export default function Navbar() {
-  const { isLoggedIn, isVendor, logout } = useAuth();
+  const { isLoggedIn, isVendor: authIsVendor, logout } = useAuth();
+  const [isVendor, setIsVendor] = useState(authIsVendor || false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
+    if (authIsVendor) {
+      setIsVendor(true);
+      return;
+    }
+    if (isLoggedIn) {
+      const token = localStorage.getItem("accessToken");
+      if (token) {
+        fetch(`${API_BASE_URL}/api/vendor/profile/`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+          .then((res) => {
+            setIsVendor(res.ok);
+          })
+          .catch(() => setIsVendor(false));
+      }
+    } else {
+      setIsVendor(false);
+    }
+  }, [isLoggedIn, authIsVendor]);
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);

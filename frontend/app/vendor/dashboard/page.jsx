@@ -232,7 +232,6 @@ export default function VendorDashboard() {
             >
               Subscription
             </Link>
-
             {/* Notification Bell */}
             <button className="relative w-10 h-10 rounded-2xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-all">
               🔔
