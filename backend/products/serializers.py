@@ -6,6 +6,8 @@ class ProductSerializer(serializers.ModelSerializer):
 
     category = serializers.StringRelatedField()
 
+    vendor = serializers.StringRelatedField()
+
     class Meta:
         model = Product
         fields = "__all__"

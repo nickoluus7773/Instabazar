@@ -9,8 +9,12 @@ import EditProfileModal from "./profile-cmp/EditProfileModal";
 import Navbar from "../components/layout/Navbar";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ProfilePage() {
+  const router = useRouter();
+  const { logout } = useAuth();
   const [activeTab, setActiveTab] = useState("overview");
   const [isEditOpen, setIsEditOpen] = useState(false);
 
@@ -40,6 +44,11 @@ export default function ProfilePage() {
   const fetchProfile = async () => {
     try {
       const token = localStorage.getItem("accessToken");
+      if (!token) {
+        logout();
+        router.push("/login");
+        return;
+      }
 
       const res = await axios.get("http://127.0.0.1:8000/api/profile/", {
         headers: {
@@ -50,6 +59,10 @@ export default function ProfilePage() {
       setUser(res.data);
     } catch (error) {
       console.error(error);
+      if (error?.response?.status === 401) {
+        logout();
+        router.push("/login");
+      }
     }
   };
 

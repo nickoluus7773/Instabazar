@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import Navbar from "../components/layout/Navbar";
 import API_BASE_URL from "@/lib/api";
 
@@ -178,23 +179,22 @@ export default function RegisterPage() {
               {loading ? "Creating Account..." : "Create Account"}
             </button>
 
-            <button
-              type="button"
-              onClick={() => router.push("/register/vendor")}
-              className="w-full border border-purple-200 text-purple-700 font-semibold py-3 rounded-2xl hover:bg-purple-50 transition-all"
+            <Link
+              href="/register/vendor"
+              className="block text-center w-full border border-purple-200 text-purple-700 font-semibold py-3 rounded-2xl hover:bg-purple-50 transition-all"
             >
               Sign up as Vendor
-            </button>
+            </Link>
           </form>
 
           <p className="text-center text-sm text-gray-500 mt-6">
             Already have an account?
-            <span
-              onClick={() => router.push("/login")}
+            <Link
+              href="/login"
               className="text-purple-600 font-semibold ml-2 cursor-pointer"
             >
               Sign in
-            </span>
+            </Link>
           </p>
         </div>
       </div>

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import API_BASE_URL from "@/lib/api";
 
 export default function VendorRegisterPage() {
@@ -29,7 +30,8 @@ export default function VendorRegisterPage() {
   const submitVendorRegistration = async (e) => {
     e.preventDefault();
 
-    if (form.password !== form.confirmPassword) {
+    const token = localStorage.getItem("accessToken");
+    if (!token && form.password !== form.confirmPassword) {
       alert("Passwords do not match");
       return;
     }
@@ -37,11 +39,16 @@ export default function VendorRegisterPage() {
     setLoading(true);
 
     try {
+      const headers = {
+        "Content-Type": "application/json",
+      };
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/register/vendor/`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers,
         body: JSON.stringify({
           username: form.username,
           email: form.email,
@@ -64,8 +71,12 @@ export default function VendorRegisterPage() {
       }
 
       if (response.ok) {
-        alert("Vendor registration submitted successfully. It will be reviewed by the admin.");
-        router.push("/login");
+        alert("Vendor profile created successfully!");
+        if (token) {
+          router.push("/vendor/dashboard");
+        } else {
+          router.push("/login");
+        }
       } else {
         alert(data.error || "Vendor registration failed");
       }
@@ -90,20 +101,20 @@ export default function VendorRegisterPage() {
         <form onSubmit={submitVendorRegistration} className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-700">Username</label>
-              <input name="username" value={form.username} onChange={handleChange} required className="h-12 w-full rounded-2xl border border-gray-200 px-4" />
+              <label className="mb-2 block text-sm font-semibold text-gray-700">Username (for new users)</label>
+              <input name="username" value={form.username} onChange={handleChange} className="h-12 w-full rounded-2xl border border-gray-200 px-4" />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-700">Email</label>
-              <input type="email" name="email" value={form.email} onChange={handleChange} required className="h-12 w-full rounded-2xl border border-gray-200 px-4" />
+              <label className="mb-2 block text-sm font-semibold text-gray-700">Email (for new users)</label>
+              <input type="email" name="email" value={form.email} onChange={handleChange} className="h-12 w-full rounded-2xl border border-gray-200 px-4" />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-700">Password</label>
-              <input type="password" name="password" value={form.password} onChange={handleChange} required className="h-12 w-full rounded-2xl border border-gray-200 px-4" />
+              <label className="mb-2 block text-sm font-semibold text-gray-700">Password (for new users)</label>
+              <input type="password" name="password" value={form.password} onChange={handleChange} className="h-12 w-full rounded-2xl border border-gray-200 px-4" />
             </div>
             <div>
-              <label className="mb-2 block text-sm font-semibold text-gray-700">Confirm Password</label>
-              <input type="password" name="confirmPassword" value={form.confirmPassword} onChange={handleChange} required className="h-12 w-full rounded-2xl border border-gray-200 px-4" />
+              <label className="mb-2 block text-sm font-semibold text-gray-700">Confirm Password (for new users)</label>
+              <input type="password" name="confirmPassword" value={form.confirmPassword} onChange={handleChange} className="h-12 w-full rounded-2xl border border-gray-200 px-4" />
             </div>
             <div>
               <label className="mb-2 block text-sm font-semibold text-gray-700">Business Name</label>
@@ -148,9 +159,9 @@ export default function VendorRegisterPage() {
 
         <p className="mt-6 text-center text-sm text-gray-500">
           Already have an account?{' '}
-          <span onClick={() => router.push("/login")} className="ml-2 cursor-pointer font-semibold text-purple-600">
+          <Link href="/login" className="ml-2 cursor-pointer font-semibold text-purple-600">
             Sign in
-          </span>
+          </Link>
         </p>
       </div>
     </div>

@@ -25,7 +25,7 @@ class Product(models.Model):
         decimal_places=2
     )
 
-    productImage = models.URLField()
+    productImage = models.TextField()
 
     productStock = models.IntegerField(default=0)
 
