@@ -100,7 +100,7 @@ class VendorViewSet(viewsets.ModelViewSet):
             start = (page - 1) * page_size
             end = start + page_size
             
-            from .serializers import ProductSerializer
+            from products.serializers import ProductSerializer
             serializer = ProductSerializer(products[start:end], many=True)
             
             return Response({
