@@ -108,9 +108,6 @@ def delete_account(request):
 
 @api_view(["POST"])
 def register_vendor(request):
-    username = request.data.get("username")
-    email = request.data.get("email")
-    password = request.data.get("password")
     business_name = request.data.get("business_name")
     instagram_handle = request.data.get("instagram_handle", "")
     location = request.data.get("location", "")
@@ -119,22 +116,47 @@ def register_vendor(request):
     follower_count = request.data.get("follower_count", 0)
     subscription_plan = request.data.get("subscription_plan", "free")
 
-    if not username or not email or not password or not business_name:
+    if not business_name:
         return Response(
-            {"error": "Username, email, password, and business name are required"},
+            {"error": "Business name is required"},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
-    if User.objects.filter(username=username).exists():
-        return Response(
-            {"error": "Username already exists"},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+    user = None
+    if request.user and request.user.is_authenticated:
+        user = request.user
+        if hasattr(user, "vendor_profile"):
+            return Response(
+                {"error": "Vendor profile already exists for this account"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+    else:
+        username = request.data.get("username")
+        email = request.data.get("email")
+        password = request.data.get("password")
 
-    if User.objects.filter(email=email).exists():
-        return Response(
-            {"error": "Email already exists"},
-            status=status.HTTP_400_BAD_REQUEST,
+        if not username or not email or not password:
+            return Response(
+                {"error": "Username, email, password, and business name are required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if User.objects.filter(username=username).exists():
+            return Response(
+                {"error": "Username already exists"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if User.objects.filter(email=email).exists():
+            return Response(
+                {"error": "Email already exists"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = User.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
         )
 
     base_slug = slugify(business_name) or "vendor"
@@ -144,26 +166,19 @@ def register_vendor(request):
         store_slug = f"{base_slug}-{suffix}"
         suffix += 1
 
-    with transaction.atomic():
-        user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password,
-        )
-
-        Vendor.objects.create(
-            user=user,
-            business_name=business_name,
-            instagram_handle=instagram_handle or None,
-            location=location or None,
-            bio=bio or None,
-            logo_url=logo_url or None,
-            follower_count=int(follower_count or 0),
-            subscription_plan=subscription_plan if subscription_plan in ["free", "paid"] else "free",
-            store_slug=store_slug,
-        )
+    Vendor.objects.create(
+        user=user,
+        business_name=business_name,
+        instagram_handle=instagram_handle or None,
+        location=location or None,
+        bio=bio or None,
+        logo_url=logo_url or None,
+        follower_count=int(follower_count or 0),
+        subscription_plan=subscription_plan if subscription_plan in ["free", "paid"] else "free",
+        store_slug=store_slug,
+    )
 
     return Response(
-        {"message": "Vendor registration submitted successfully. Your account is pending verification."},
+        {"message": "Vendor profile created successfully."},
         status=status.HTTP_201_CREATED,
     )

@@ -122,16 +122,24 @@ export const getVendorProducts = async (token, page = 1, pageSize = 10) => {
 
 export const createProduct = async (token, productData) => {
   try {
+    const isFormData = typeof FormData !== "undefined" && productData instanceof FormData;
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      ...(isFormData ? {} : { "Content-Type": "application/json" }),
+    };
+
     const response = await fetch(`${API_BASE_URL}/api/vendor/products/`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      body: productData instanceof FormData ? productData : JSON.stringify(productData),
+      headers,
+      body: isFormData ? productData : JSON.stringify(productData),
     });
 
     if (!response.ok) {
-      throw new Error(`Error: ${response.status}`);
+      let errData = {};
+      try {
+        errData = await response.json();
+      } catch {}
+      throw new Error(errData.error || errData.detail || `Error: ${response.status}`);
     }
 
     return await response.json();

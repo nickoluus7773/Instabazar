@@ -12,11 +12,13 @@ export default function LoginPage() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const { login } = useAuth();
+
   const loginUser = async (e) => {
     e.preventDefault();
-
     setLoading(true);
+    setErrorMessage("");
 
     try {
       const response = await fetch(`${API_BASE_URL}/api/login/`, {
@@ -37,17 +39,19 @@ export default function LoginPage() {
         data = {};
       }
 
-      if (response.ok) {
+      if (response.ok && data.access) {
         login(data.access);
         router.push("/");
       } else {
-        alert(data.detail || data.error || "Invalid username or password");
+        const msg = data.detail || data.error || "Invalid username or password";
+        setErrorMessage(msg);
+        alert(msg);
       }
     } catch (error) {
       console.error("Login request failed:", error);
-      alert(
-        `Unable to reach the backend server. Make sure Django is running on ${API_BASE_URL}.`,
-      );
+      const msg = `Unable to reach backend at ${API_BASE_URL}. Ensure Django is running on port 8000.`;
+      setErrorMessage(msg);
+      alert(msg);
     } finally {
       setLoading(false);
     }
@@ -103,6 +107,12 @@ export default function LoginPage() {
             p-12
           "
         >
+          {errorMessage && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-2xl text-sm font-medium text-center">
+              {errorMessage}
+            </div>
+          )}
+
           <form onSubmit={loginUser} className="space-y-6">
             {/* Username */}
             <div>
@@ -115,6 +125,7 @@ export default function LoginPage() {
                 placeholder="Enter your username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
+                required
                 className="
                   w-full
                   h-16
@@ -141,6 +152,7 @@ export default function LoginPage() {
                 placeholder="Enter your password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                required
                 className="
                   w-full
                   h-16

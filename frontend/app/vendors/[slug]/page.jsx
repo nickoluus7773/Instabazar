@@ -136,7 +136,7 @@ export default function VendorDetailPage() {
   }
 
   // Determine products to display
-  const products = storeData?.products || [];
+  const products = vendor?.products || storeData?.products || [];
   const categoryName = vendor?.category_name || storeData?.category || "Store";
 
   return (
