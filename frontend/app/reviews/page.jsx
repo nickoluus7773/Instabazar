@@ -19,7 +19,7 @@ export default function CommunityPage() {
       const token = localStorage.getItem("accessToken");
       console.log(token);
 
-      const res = await fetch("http://127.0.0.1:8001/api/me/", {
+      const res = await fetch("http://127.0.0.1:8000/api/me/", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -34,7 +34,7 @@ export default function CommunityPage() {
   }, []);
   const fetchReviews = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:8001/api/reviews/");
+      const response = await fetch("http://127.0.0.1:8000/api/reviews/");
       const data = await response.json();
       setReviews(data);
     } catch (error) {
@@ -64,7 +64,7 @@ export default function CommunityPage() {
       }, 1000);
       const token = localStorage.getItem("accessToken");
 
-      const response = await fetch("http://127.0.0.1:8001/api/reviews/", {
+      const response = await fetch("http://127.0.0.1:8000/api/reviews/", {
         method: "POST",
 
         headers: {

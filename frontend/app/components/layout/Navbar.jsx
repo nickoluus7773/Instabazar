@@ -12,22 +12,35 @@ export default function Navbar() {
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    if (isLoggedIn) {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        fetch(`${API_BASE_URL}/api/vendor/profile/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-          .then((res) => {
-            setIsVendor(res.ok);
-          })
-          .catch(() => setIsVendor(false));
-      }
-    } else {
+    if (!isLoggedIn) {
       setIsVendor(false);
+      return;
     }
+
+    const token = localStorage.getItem("accessToken");
+
+    if (!token) {
+      setIsVendor(false);
+      return;
+    }
+
+    fetch(`${API_BASE_URL}/api/vendor/profile/`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    })
+      .then((res) => {
+        if (res.ok) {
+          // User has a Vendor profile
+          setIsVendor(true);
+        } else {
+          // 404 = normal user, no Vendor profile
+          setIsVendor(false);
+        }
+      })
+      .catch(() => {
+        setIsVendor(false);
+      });
   }, [isLoggedIn]);
 
   useEffect(() => {

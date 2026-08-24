@@ -27,7 +27,7 @@ export default function Settings({ user }) {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const res = await fetch("http://127.0.0.1:8001/api/change-password/", {
+      const res = await fetch("http://127.0.0.1:8000/api/change-password/", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -68,7 +68,7 @@ export default function Settings({ user }) {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const res = await fetch("http://127.0.0.1:8001/api/delete-account/", {
+      const res = await fetch("http://127.0.0.1:8000/api/delete-account/", {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

@@ -12,7 +12,7 @@ export default function Settings() {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const res = await fetch("http://127.0.0.1:8001/api/profile/reviews/", {
+      const res = await fetch("http://127.0.0.1:8000/api/profile/reviews/", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -33,7 +33,7 @@ export default function Settings() {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const res = await fetch(`http://127.0.0.1:8001/api/reviews/${id}/`, {
+      const res = await fetch(`http://127.0.0.1:8000/api/reviews/${id}/`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -76,7 +76,7 @@ export default function Settings() {
     try {
       const token = localStorage.getItem("accessToken");
 
-      const res = await fetch(`http://127.0.0.1:8001/api/reviews/${id}/`, {
+      const res = await fetch(`http://127.0.0.1:8000/api/reviews/${id}/`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
