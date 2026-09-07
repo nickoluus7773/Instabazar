@@ -26,7 +26,7 @@ export default function EditProfileModal({ user, setUser, closeModal }) {
       const token = localStorage.getItem("accessToken");
 
       const res = await axios.put(
-        "http://127.0.0.1:8001/api/profile/",
+        "http://127.0.0.1:8000/api/profile/",
         {
           username: formData.username,
           bio: formData.bio,
