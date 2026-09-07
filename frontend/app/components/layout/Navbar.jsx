@@ -2,46 +2,12 @@
 
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState, useRef } from "react";
-import API_BASE_URL from "@/lib/api";
+import { useEffect, useRef, useState } from "react";
 
 export default function Navbar() {
-  const { isLoggedIn, logout } = useAuth();
-  const [isVendor, setIsVendor] = useState(false);
+  const { isLoggedIn, isVendor, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    if (!isLoggedIn) {
-      setIsVendor(false);
-      return;
-    }
-
-    const token = localStorage.getItem("accessToken");
-
-    if (!token) {
-      setIsVendor(false);
-      return;
-    }
-
-    fetch(`${API_BASE_URL}/api/vendor/profile/`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    })
-      .then((res) => {
-        if (res.ok) {
-          // User has a Vendor profile
-          setIsVendor(true);
-        } else {
-          // 404 = normal user, no Vendor profile
-          setIsVendor(false);
-        }
-      })
-      .catch(() => {
-        setIsVendor(false);
-      });
-  }, [isLoggedIn]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -66,6 +32,7 @@ export default function Navbar() {
           <Link href="/gallery">Gallery</Link>
           <Link href="/vendors">Vendors</Link>
           <Link href="/reviews">Community</Link>
+          {isLoggedIn && isVendor && <Link href="/subscription">Subscription</Link>}
         </nav>
 
         <div className="flex gap-3 items-center">
