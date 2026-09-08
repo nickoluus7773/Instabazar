@@ -33,6 +33,8 @@ export default function Navbar() {
       setIsVendor(false);
     }
   }, [isLoggedIn, authIsVendor]);
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setDropdownOpen(false);
