@@ -11,12 +11,7 @@ export default function VendorProfile() {
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState(null);
   const [formData, setFormData] = useState({});
-
-  useEffect(() => {
-    if (isLoggedIn) {
-      fetchProfile();
-    }
-  }, [isLoggedIn]);
+  const [imagePreview, setImagePreview] = useState("");
 
   const fetchProfile = async () => {
     try {
@@ -25,6 +20,7 @@ export default function VendorProfile() {
       const data = await getVendorProfile(token);
       setProfile(data);
       setFormData(data);
+      setImagePreview(data.logo_url || "");
     } catch (err) {
       setError("Failed to load profile");
       console.error(err);
@@ -32,6 +28,12 @@ export default function VendorProfile() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchProfile();
+    }
+  }, [isLoggedIn]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -41,11 +43,27 @@ export default function VendorProfile() {
     }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setFormData((prev) => ({ ...prev, profile_image: file }));
+    setImagePreview(URL.createObjectURL(file));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       const token = localStorage.getItem("accessToken");
-      const updated = await updateVendorProfile(token, formData);
+      const payload = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key !== "profile_image" && value !== null && value !== undefined) {
+          payload.append(key, value);
+        }
+      });
+      if (formData.profile_image instanceof File) {
+        payload.append("profile_image", formData.profile_image);
+      }
+      const updated = await updateVendorProfile(token, payload);
       setProfile(updated);
       setEditing(false);
       setError(null);
@@ -92,6 +110,25 @@ export default function VendorProfile() {
               onChange={handleChange}
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Vendor Profile Image
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="w-full text-sm text-gray-600"
+            />
+            {imagePreview && (
+              <img
+                src={imagePreview}
+                alt="Vendor profile preview"
+                className="mt-3 h-24 w-24 rounded-full object-cover"
+              />
+            )}
           </div>
 
           <div>

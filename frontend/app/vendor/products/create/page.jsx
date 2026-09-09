@@ -82,16 +82,19 @@ export default function CreateProduct() {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const payload = {
-        title: formData.title,
-        description: formData.description,
-        price: formData.price,
-        category: formData.category,
-        stock: formData.stock,
-        condition: formData.condition,
-        size: formData.size,
-        image_url: formData.image_url || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600",
-      };
+      const payload = new FormData();
+      payload.append("title", formData.title);
+      payload.append("description", formData.description);
+      payload.append("price", formData.price);
+      payload.append("category", formData.category);
+      payload.append("stock", formData.stock);
+      payload.append("condition", formData.condition);
+      payload.append("size", formData.size);
+      if (formData.image) {
+        payload.append("productImage", formData.image);
+      } else {
+        payload.append("image_url", formData.image_url || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600");
+      }
 
       await createProduct(token, payload);
       alert("Product published successfully! Viewing in Gallery.");

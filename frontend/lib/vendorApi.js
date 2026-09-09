@@ -58,10 +58,10 @@ export const updateVendorProfile = async (token, profileData) => {
     const response = await fetch(`${API_BASE_URL}/api/vendor/profile/update/`, {
       method: "PUT",
       headers: {
-        "Content-Type": "application/json",
+        ...(profileData instanceof FormData ? {} : { "Content-Type": "application/json" }),
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify(profileData),
+      body: profileData instanceof FormData ? profileData : JSON.stringify(profileData),
     });
 
     if (!response.ok) {
