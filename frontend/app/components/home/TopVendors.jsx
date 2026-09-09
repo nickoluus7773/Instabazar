@@ -31,9 +31,9 @@ export default function TopVendors() {
   ];
 
   return (
-    <section className="max-w-7xl mx-auto px-6 py-20">
+    <section className="bg-[#081225] max-w-8xl mx-auto px-6 py-20">
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold">Top Vendors</h2>
+        <h2 className="text-[#F5AE30] text-3xl font-bold">Top Vendors</h2>
         <p className="text-gray-500 mt-2">Trusted sellers from our community</p>
       </div>
 
@@ -55,11 +55,6 @@ export default function TopVendors() {
               {vendor.products} Products
             </p>
 
-            {vendor.badge && (
-              <span className="inline-block mt-3 px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-xs font-semibold">
-                ⭐ Premium
-              </span>
-            )}
           </div>
         ))}
       </div>

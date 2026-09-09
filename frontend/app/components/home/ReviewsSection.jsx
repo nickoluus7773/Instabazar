@@ -21,9 +21,9 @@ export default function ReviewsSection() {
   ];
 
   return (
-    <section className="max-w-7xl mx-auto px-6 py-20">
+    <section className="bg-[#081225] max-w-8xl mx-auto px-6 py-20">
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold">What People Say</h2>
+        <h2 className="text-[#F5AE30] text-3xl font-bold">What People Say</h2>
         <p className="text-gray-500 mt-2">Reviews from our growing community</p>
       </div>
 
@@ -33,11 +33,10 @@ export default function ReviewsSection() {
             key={review.id}
             className="bg-white rounded-3xl p-6 shadow-sm hover:shadow-xl transition"
           >
-            <div className="text-yellow-500 text-xl mb-4">⭐⭐⭐⭐⭐</div>
 
             <p className="text-gray-600 italic">"{review.review}"</p>
 
-            <h4 className="font-bold mt-4">{review.name}</h4>
+            <h4 className="text-[#F5AE30] font-bold mt-4">{review.name}</h4>
           </div>
         ))}
       </div>
