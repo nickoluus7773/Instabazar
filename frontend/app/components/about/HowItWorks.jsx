@@ -30,7 +30,7 @@ export default function HowItWorks() {
       <div className="grid gap-6 lg:grid-cols-3">
         {steps.map((step, index) => (
           <Card key={step.title} className="p-8">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500 text-sm font-black text-white">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-sm font-black text-white">
               0{index + 1}
             </div>
             <h3 className="mt-6 text-2xl font-bold text-slate-900">{step.title}</h3>

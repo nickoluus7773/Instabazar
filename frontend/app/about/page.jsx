@@ -1,3 +1,5 @@
+import Navbar from "../components/layout/Navbar";
+import Footer from "../components/home/Footer";
 import {
   AboutHero,
   Features,
@@ -14,9 +16,11 @@ import {
   CoreValues,
 } from "../components/about";
 
+
 export default function AboutPage() {
   return (
     <>
+      <Navbar />
       <AboutHero />
       <OurStory />
       <MissionVision />
@@ -30,6 +34,8 @@ export default function AboutPage() {
       <FAQ />
       <PrimaryCTA />
       <FooterCTA />
+      
+      <Footer />
     </>
   );
 }

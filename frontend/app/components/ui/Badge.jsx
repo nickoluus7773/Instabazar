@@ -14,12 +14,11 @@ export default function Badge({
         text-sm
         font-semibold
         bg-gradient-to-r
-        from-pink-100
-        via-orange-50
-        to-yellow-100
-        text-pink-700
+        from-purple-100
+        to-pink-100
+        text-purple-700
         border
-        border-pink-200
+        border-purple-200
         ${className}
       `}
     >

@@ -5,7 +5,7 @@ import SectionContainer from "../ui/SectionContainer";
 export default function PrimaryCTA() {
   return (
     <SectionContainer padding="py-24" className="bg-white">
-      <div className="mx-auto max-w-4xl rounded-[2rem] bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-400 p-14 text-center text-white shadow-2xl shadow-orange-200/30">
+      <div className="mx-auto max-w-4xl rounded-[2rem] bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 p-14 text-center text-white shadow-2xl shadow-pink-200/30">
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-white/90">
           Ready to prepare your catalog
         </p>

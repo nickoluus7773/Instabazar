@@ -22,7 +22,7 @@ export default function PlatformStats() {
       <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         {stats.map((stat) => (
           <Card key={stat.label} className="p-8 text-center">
-            <h3 className="text-4xl font-black bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500 bg-clip-text text-transparent">
+            <h3 className="text-4xl font-black bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
               {stat.value}
             </h3>
             <p className="mt-3 text-sm leading-7 text-slate-600">{stat.label}</p>

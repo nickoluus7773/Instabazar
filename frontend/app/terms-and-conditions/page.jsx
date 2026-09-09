@@ -1,4 +1,6 @@
 import LegalPageTemplate from "../components/legal/LegalPageTemplate";
+import Navbar from "../components/layout/Navbar";
+import Footer from "../components/home/Footer";
 
 const sections = [
   {
@@ -47,11 +49,15 @@ const sections = [
 
 export default function TermsAndConditionsPage() {
   return (
-    <LegalPageTemplate
+    <>
+      <Navbar />
+      <LegalPageTemplate
       badge="📄 Terms & Conditions"
       title="Terms and conditions"
       intro="These terms describe the responsibilities of vendors, users, and InstaBazaar in the context of a SaaS catalog management platform built for managing product data, subscriptions, and vendor operations."
-      sections={sections}
-    />
+        sections={sections}
+      />
+      <Footer />
+    </>
   );
 }

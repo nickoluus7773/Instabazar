@@ -46,7 +46,7 @@ export default function CoreValues() {
             key={value.title}
             className="group p-8 hover:-translate-y-2 transition-all duration-300"
           >
-            <div className="h-16 w-16 rounded-2xl bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500 flex items-center justify-center text-3xl shadow-lg">
+            <div className="h-16 w-16 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center text-3xl shadow-lg">
               {value.icon}
             </div>
 

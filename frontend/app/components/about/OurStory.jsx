@@ -44,10 +44,10 @@ export default function OurStory() {
           {timeline.map((item) => (
             <div key={item.title} className="flex gap-5">
               <div className="flex flex-col items-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500 font-bold text-white shadow-lg">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 font-bold text-white shadow-lg">
                   ✓
                 </div>
-                <div className="mt-2 h-full w-px bg-gradient-to-b from-pink-300 to-orange-200"></div>
+                <div className="mt-2 h-full w-px bg-gradient-to-b from-purple-300 to-pink-200"></div>
               </div>
 
               <div>
@@ -82,14 +82,14 @@ export default function OurStory() {
 
           <div className="mt-10 grid grid-cols-2 gap-4">
             <div className="rounded-2xl bg-slate-50 p-6 text-center">
-              <h4 className="text-4xl font-black bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500 bg-clip-text text-transparent">
+              <h4 className="text-4xl font-black bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
                 100%
               </h4>
               <p className="mt-2 text-sm text-slate-500">Vendor Focused</p>
             </div>
 
             <div className="rounded-2xl bg-slate-50 p-6 text-center">
-              <h4 className="text-4xl font-black bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500 bg-clip-text text-transparent">
+              <h4 className="text-4xl font-black bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
                 SaaS
               </h4>
               <p className="mt-2 text-sm text-slate-500">Catalog Platform</p>

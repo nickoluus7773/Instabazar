@@ -7,10 +7,10 @@ export default function AboutHero() {
   return (
     <SectionContainer
       padding="pt-24 pb-16 lg:pt-28 lg:pb-20"
-      className="relative overflow-hidden bg-gradient-to-b from-white via-orange-50/30 to-white"
+      className="relative overflow-hidden bg-gradient-to-b from-white via-purple-50/30 to-white"
     >
-      <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-pink-200/30 blur-3xl"></div>
-      <div className="absolute bottom-8 right-0 h-80 w-80 rounded-full bg-orange-200/30 blur-3xl"></div>
+      <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-purple-200/30 blur-3xl"></div>
+      <div className="absolute bottom-8 right-0 h-80 w-80 rounded-full bg-pink-200/30 blur-3xl"></div>
 
       <div className="grid items-center gap-16 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20">
         <div className="relative z-10">
@@ -18,7 +18,7 @@ export default function AboutHero() {
 
           <h1 className="mt-8 text-5xl font-black leading-[0.95] text-slate-900 sm:text-6xl lg:text-7xl">
             Empowering
-            <span className="mt-3 block bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500 bg-clip-text text-transparent">
+            <span className="mt-3 block bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
               Instagram
             </span>
             Businesses
@@ -66,7 +66,7 @@ export default function AboutHero() {
               ))}
             </div>
 
-            <div className="mt-8 rounded-2xl border border-orange-100 bg-gradient-to-r from-pink-50 via-orange-50 to-yellow-50 p-6">
+            <div className="mt-8 rounded-2xl border border-purple-100 bg-gradient-to-r from-purple-50 to-pink-50 p-6">
               <h4 className="font-bold text-slate-900">Connected Platforms</h4>
               <div className="mt-5 flex flex-wrap gap-3">
                 {['Instagram', 'Catalog', 'Marketplace', 'Analytics'].map((item) => (
@@ -79,7 +79,7 @@ export default function AboutHero() {
 
             <Card className="absolute -bottom-6 -right-6 hidden w-44 flex-col items-start px-6 py-5 shadow-xl lg:flex">
               <p className="text-sm text-slate-500">Monthly Growth</p>
-              <h2 className="mt-2 text-4xl font-black bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-500 bg-clip-text text-transparent">
+              <h2 className="mt-2 text-4xl font-black bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
                 +28%
               </h2>
             </Card>

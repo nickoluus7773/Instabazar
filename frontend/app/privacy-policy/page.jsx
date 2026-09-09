@@ -1,4 +1,6 @@
 import LegalPageTemplate from "../components/legal/LegalPageTemplate";
+import Navbar from "../components/layout/Navbar";
+import Footer from "../components/home/Footer";
 
 const sections = [
   {
@@ -47,11 +49,15 @@ const sections = [
 
 export default function PrivacyPolicyPage() {
   return (
-    <LegalPageTemplate
+    <>
+      <Navbar />
+      <LegalPageTemplate
       badge="🔒 Privacy Policy"
       title="Privacy policy"
       intro="This policy explains how InstaBazaar handles user, vendor, and platform data for catalog management, subscription operations, analytics, and future commerce integrations."
-      sections={sections}
-    />
+        sections={sections}
+      />
+      <Footer />
+    </>
   );
 }

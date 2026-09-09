@@ -8,13 +8,13 @@ export default function Button({
   const styles = {
 
     primary:
-      "bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-400 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]",
+      "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]",
 
     secondary:
-      "bg-white border border-slate-300 text-slate-900 hover:border-pink-400 hover:text-pink-600",
+      "bg-white border border-slate-300 text-slate-900 hover:border-purple-400 hover:text-purple-600",
 
     outline:
-      "border border-pink-300 text-pink-600 hover:bg-pink-50",
+      "border border-purple-300 text-purple-600 hover:bg-purple-50",
 
     dark:
       "bg-slate-900 text-white hover:bg-slate-800",
