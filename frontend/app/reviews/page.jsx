@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRef } from "react";
 import { FiInfo } from "react-icons/fi";
-
+import Navbar from "../components/layout/Navbar";
 export default function CommunityPage() {
   const [reviews, setReviews] = useState([]);
   const [message, setMessage] = useState("");

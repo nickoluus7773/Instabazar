@@ -2,7 +2,6 @@
 
 import ProfileSidebar from "./profile-cmp/ProfileSidebar";
 import ProfileOverview from "./profile-cmp/ProfileOverview";
-import Favorites from "./profile-cmp/Favorites";
 import MyReviews from "./profile-cmp/MyReviews";
 import Settings from "./profile-cmp/Settings";
 import EditProfileModal from "./profile-cmp/EditProfileModal";
@@ -25,9 +24,6 @@ export default function ProfilePage() {
         return (
           <ProfileOverview user={user} openEdit={() => setIsEditOpen(true)} />
         );
-
-      case "favorites":
-        return <Favorites />;
 
       case "reviews":
         return <MyReviews />;
@@ -77,8 +73,8 @@ export default function ProfilePage() {
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-gray-100">
-        <div className="max-w-7xl mx-auto px-5 py-8">
+      <div className="bg-[#081225] min-h-screen bg-gray-100">
+        <div className=" bg-[#081225] max-w-7xl mx-auto px-5 py-8">
           <div className="grid lg:grid-cols-4 gap-8">
             {/* Sidebar */}
 

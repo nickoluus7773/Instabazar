@@ -56,7 +56,7 @@ export default function Navbar() {
           <Link href="/">Home</Link>
           <Link href="/gallery">Gallery</Link>
           <Link href="/vendors">Vendors</Link>
-          <Link href="/reviews">Community</Link>
+          {isLoggedIn && isVendor && <Link href="/reviews">Community</Link>}
           {isLoggedIn && isVendor && <Link href="/subscription">Subscription</Link>}
         </nav>
 
@@ -111,7 +111,7 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/login" className="px-4 py-2 rounded-xl border">
+              <Link href="/login" className="px-4 py-2  rounded-xl border border-[#F5AE30] text-[#F5AE30]">
                 Login
               </Link>
 
