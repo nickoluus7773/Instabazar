@@ -3,16 +3,16 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { ArrowLeft, ArrowUpRight, BadgeCheck, MapPin, Package, Search, Users } from "lucide-react";
 import Navbar from "@/app/components/layout/Navbar";
-// import { useFavorites } from "@/context/FavoritesContext";
+import Footer from "@/app/components/home/Footer";
 import { getPublicVendorBySlug } from "@/lib/vendorApi";
 import { getVendorStoreData } from "@/app/data/vendorStoreData";
+import { getLocalVendorImage } from "@/app/data/vendorImages";
 
-// Fallback vendor images/emojis by category
 const categoryEmojis = {
   "Fashion & Accessories": "👗",
   "Vintage & Retro": "📻",
-  "Thrift & Pre-loved": "♻️",
   Handmade: "🧶",
   Fashion: "👗",
   "Home Decor": "🏺",
@@ -26,63 +26,30 @@ const categoryEmojis = {
   Accessories: "👜",
 };
 
-// Condition badge colors
-const conditionStyles = {
-  new: "bg-emerald-50 text-emerald-700",
-  refurbished: "bg-amber-50 text-amber-700",
-  used: "bg-blue-50 text-blue-700",
-};
-
 export default function VendorDetailPage() {
   const { slug } = useParams();
-  // const { isFavorite, toggleFavorite } = useFavorites();
   const [vendor, setVendor] = useState(null);
   const [storeData, setStoreData] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [imageFailed, setImageFailed] = useState(false);
 
   useEffect(() => {
     async function loadVendor() {
       try {
-        // Try API first
         const vendorData = await getPublicVendorBySlug(slug);
-
-        // Check for product_count — if 0 or missing, use fallback
-        if (!vendorData.product_count || vendorData.product_count === 0) {
-          // Check mock data for this slug
-          const mockStore = getVendorStoreData(slug);
-          if (mockStore) {
-            vendorData.product_count = mockStore.products.length;
-            vendorData.category_name = mockStore.category;
-            setStoreData(mockStore);
-          } else {
-            vendorData.category_name = "General Store";
-          }
+        const mockStore = getVendorStoreData(slug);
+        if (!vendorData.product_count && mockStore) {
+          vendorData.product_count = mockStore.products.length;
+          vendorData.category_name = mockStore.category;
+          setStoreData(mockStore);
         }
-
         setVendor(vendorData);
       } catch (loadError) {
-        // API failed — try mock data as fallback
         const mockStore = getVendorStoreData(slug);
         if (mockStore) {
-          const fallbackVendor = {
-            business_name: slug
-              .split("-")
-              .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-              .join(" "),
-            store_slug: slug,
-            bio: `Discover amazing products from ${slug
-              .split("-")
-              .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-              .join(" ")}. Browse our curated collection of unique items.`,
-            location: "India",
-            follower_count: "1.2K",
-            product_count: mockStore.products.length,
-            verification_status: "verified",
-            category_name: mockStore.category,
-            logo_url: null,
-          };
-          setVendor(fallbackVendor);
+          const businessName = slug.split("-").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+          setVendor({ business_name: businessName, store_slug: slug, bio: `Discover amazing products from ${businessName}. Browse our curated collection of unique items.`, location: "India", follower_count: "1.2K", product_count: mockStore.products.length, verification_status: "verified", category_name: mockStore.category, logo_url: null });
           setStoreData(mockStore);
         } else {
           setError(loadError.message || "Could not load vendor data.");
@@ -95,238 +62,54 @@ export default function VendorDetailPage() {
     if (slug) loadVendor();
   }, [slug]);
 
-  const getCategoryEmoji = (name) => {
-    return categoryEmojis[name] || "🏪";
-  };
-
   if (loading) {
-    return (
-      <main className="min-h-screen bg-[#f5f7fb]">
-        <Navbar />
-        <section className="mx-auto max-w-6xl px-6 py-20 text-center">
-          <div className="animate-pulse">
-            <div className="mx-auto h-20 w-20 rounded-full bg-purple-200" />
-            <div className="mx-auto mt-6 h-6 w-48 rounded bg-purple-200" />
-            <div className="mx-auto mt-3 h-4 w-72 rounded bg-gray-200" />
-            <div className="mx-auto mt-8 grid max-w-4xl grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-64 rounded-2xl bg-gray-100" />
-              ))}
-            </div>
-          </div>
-        </section>
-      </main>
-    );
+    return <><Navbar /><main className="min-h-screen bg-[#f5f3ef] px-6 py-20"><div className="mx-auto max-w-7xl animate-pulse"><div className="h-80 rounded-[2rem] bg-slate-200" /><div className="mt-10 h-8 w-56 rounded bg-slate-200" /><div className="mt-6 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">{[1, 2, 3, 4].map((item) => <div key={item} className="h-96 rounded-[1.5rem] bg-white" />)}</div></div></main></>;
   }
 
-  if (error && !vendor) {
-    return (
-      <main className="min-h-screen bg-[#f5f7fb]">
-        <Navbar />
-        <section className="mx-auto max-w-4xl px-6 py-20 text-center">
-          <div className="text-6xl mb-6">😕</div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-3">Vendor not found</h2>
-          <p className="text-gray-500 mb-8">{error}</p>
-          <Link href="/vendors" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-purple-600 to-pink-500 text-white font-semibold shadow-lg hover:scale-105 transition">
-            ← Back to Vendors
-          </Link>
-        </section>
-      </main>
-    );
+  if (error || !vendor) {
+    return <><Navbar /><main className="flex min-h-[70vh] items-center justify-center bg-[#f5f3ef] px-6"><div className="text-center"><p className="text-5xl">🏪</p><h1 className="mt-5 text-3xl font-black text-slate-900">Vendor not found</h1><p className="mt-3 text-slate-500">{error || "This store is not available right now."}</p><Link href="/vendors" className="mt-7 inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-bold text-white"> <ArrowLeft size={16} /> Back to vendors</Link></div></main></>;
   }
 
-  // Determine products to display
-  const products = vendor?.products || storeData?.products || [];
-  const categoryName = vendor?.category_name || storeData?.category || "Store";
+  const products = vendor.products || storeData?.products || [];
+  const categoryName = vendor.category_name || storeData?.category || "Store";
+  const vendorImage = getLocalVendorImage(vendor) || vendor.logo_url;
+  const displayImage = vendorImage && !imageFailed;
 
   return (
-    <main className="min-h-screen bg-[#f5f7fb]">
+    <>
       <Navbar />
-
-      {/* Vendor Hero Section */}
-      <section className="bg-white border-b border-gray-200">
-        <div className="mx-auto max-w-6xl px-6 py-10">
-          <Link href="/vendors" className="inline-flex items-center gap-1 text-sm font-medium text-purple-600 hover:text-purple-800 transition mb-6">
-            ← Back to vendors
-          </Link>
-
-          <div className="flex flex-col md:flex-row gap-8 items-start">
-            {/* Avatar */}
-            <div className="flex-shrink-0">
-              <div className="grid h-24 w-24 place-items-center overflow-hidden rounded-2xl bg-gradient-to-br from-purple-100 to-pink-100 text-4xl shadow-md">
-                {vendor.logo_url ? (
-                  <img src={vendor.logo_url} alt={vendor.business_name} className="h-full w-full object-cover" />
-                ) : (
-                  getCategoryEmoji(categoryName)
-                )}
-              </div>
-            </div>
-
-            {/* Info */}
-            <div className="flex-1">
-              <div className="flex items-center gap-3 flex-wrap">
-                <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900">
-                  {vendor.business_name}
-                </h1>
-                {vendor.verification_status === "verified" && (
-                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700 border border-emerald-200">
-                    ✓ Verified
-                  </span>
-                )}
-              </div>
-
-              <div className="flex items-center gap-3 mt-3 flex-wrap">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-50 px-4 py-1.5 text-sm font-semibold text-purple-700 border border-purple-200">
-                  {getCategoryEmoji(categoryName)} {categoryName}
-                </span>
-                {vendor.location && (
-                  <span className="text-sm text-gray-500">📍 {vendor.location}</span>
-                )}
-              </div>
-
-              {vendor.bio && (
-                <p className="mt-4 text-gray-600 leading-relaxed max-w-2xl">{vendor.bio}</p>
-              )}
-
-              <div className="flex items-center gap-6 mt-5 flex-wrap">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <span className="text-lg">📸</span>
-                  <span className="font-semibold text-gray-800">{vendor.follower_count}</span>
-                  <span>followers</span>
+      <main className="min-h-screen bg-[#f5f3ef]">
+        <section className="relative overflow-hidden bg-slate-950 text-white">
+          <div className="absolute -right-24 -top-32 h-96 w-96 rounded-full bg-fuchsia-500/20 blur-3xl" />
+          <div className="absolute -bottom-40 left-1/3 h-96 w-96 rounded-full bg-orange-400/15 blur-3xl" />
+          <div className="relative mx-auto max-w-7xl px-6 pb-12 pt-8 sm:px-8 lg:px-10 lg:pb-16">
+            <Link href="/vendors" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-300 transition hover:text-white"><ArrowLeft size={16} /> Back to vendors</Link>
+            <div className="mt-10 grid items-end gap-8 lg:grid-cols-[1fr_auto]">
+              <div className="flex flex-col gap-6 sm:flex-row sm:items-end">
+                <div className="h-32 w-32 shrink-0 overflow-hidden rounded-[2rem] border border-white/20 bg-gradient-to-br from-orange-200 via-pink-200 to-fuchsia-300 shadow-2xl">
+                  {displayImage ? <img src={vendorImage} alt={`${vendor.business_name} storefront`} onError={() => setImageFailed(true)} className="h-full w-full object-cover" /> : <div className="grid h-full place-items-center text-5xl">{categoryEmojis[categoryName] || "🏪"}</div>}
                 </div>
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <span className="text-lg">🛍️</span>
-                  <span className="font-semibold text-gray-800">{vendor.product_count || products.length}</span>
-                  <span>products</span>
+                <div>
+                  <div className="mb-3 flex flex-wrap items-center gap-3"><span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-fuchsia-200">{categoryName}</span>{vendor.verification_status === "verified" && <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-300"><BadgeCheck size={15} /> Verified store</span>}</div>
+                  <h1 className="text-4xl font-black tracking-tight sm:text-6xl">{vendor.business_name}</h1>
+                  <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">{vendor.bio || "A curated collection from an independent creator."}</p>
+                  <div className="mt-5 flex flex-wrap gap-5 text-sm font-semibold text-slate-300"><span className="inline-flex items-center gap-2"><MapPin size={16} className="text-orange-300" /> {vendor.location || "Independent seller"}</span><span className="inline-flex items-center gap-2"><Users size={16} className="text-fuchsia-300" /> {vendor.follower_count || 0} followers</span><span className="inline-flex items-center gap-2"><Package size={16} className="text-sky-300" /> {vendor.product_count || products.length} products</span></div>
                 </div>
-
               </div>
+              <div className="hidden rounded-2xl border border-white/10 bg-white/10 p-5 text-right backdrop-blur sm:block"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Store collection</p><p className="mt-2 text-3xl font-black">{products.length}</p><p className="text-sm text-slate-300">pieces to explore</p></div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Products Section */}
-      <section className="mx-auto max-w-6xl px-6 py-12">
-        {/* Section Header */}
-        <div className="flex items-center justify-between mb-8">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-widest text-purple-600">
-              {categoryName}
-            </p>
-            <h2 className="text-2xl font-bold text-gray-900 mt-1">
-              Products ({products.length})
-            </h2>
-          </div>
-          {products.length > 0 && (
-            <span className="text-sm text-gray-400">
-              Sorted by latest
-            </span>
-          )}
-        </div>
+        <section className="mx-auto max-w-7xl px-6 py-12 sm:px-8 lg:px-10 lg:py-16">
+          <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-sm font-bold uppercase tracking-[0.18em] text-fuchsia-600">The collection</p><h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Shop {vendor.business_name}</h2><p className="mt-2 text-sm text-slate-500">Take a closer look at every piece in this store.</p></div><div className="hidden items-center gap-2 text-sm font-semibold text-slate-400 sm:flex"><Search size={16} /> Curated for you</div></div>
 
-        {/* Product Grid or Empty State */}
-        {products.length > 0 ? (
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {products.map((product) => (
-              <div
-                key={product.id}
-                className="group bg-white rounded-2xl border border-gray-200 overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300"
-              >
-                {/* Product Image */}
-                <div className="relative h-52 bg-gradient-to-br from-purple-50 to-pink-50 flex items-center justify-center text-6xl overflow-hidden">
-                  <span className="group-hover:scale-110 transition-transform duration-500">
-                    {product.productImage}
-                  </span>
-                  {/* Condition Badge */}
-                  <span
-                    className={`absolute top-3 left-3 rounded-full px-3 py-1 text-xs font-semibold border ${
-                      conditionStyles[product.productCondition] ||
-                      "bg-gray-50 text-gray-600"
-                    }`}
-                  >
-                    {product.productCondition === "new"
-                      ? "🆕 New"
-                      : product.productCondition === "refurbished"
-                        ? "🔄 Refurbished"
-                        : "📦 Pre-loved"}
-                  </span>
-                </div>
+          {products.length > 0 ? <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{products.map((product) => <article key={product.id} className="group overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(15,23,42,0.12)]"><div className="relative flex h-56 items-center justify-center overflow-hidden bg-gradient-to-br from-orange-50 via-rose-50 to-fuchsia-50 text-7xl"><span className="transition duration-500 group-hover:scale-110">{product.productImage}</span></div><div className="p-5"><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{product.category}</span><h3 className="mt-4 line-clamp-2 min-h-14 text-lg font-black leading-tight text-slate-900">{product.productTitle}</h3><p className="mt-2 line-clamp-2 min-h-12 text-sm leading-6 text-slate-500">{product.productDescription}</p><div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-100 pt-4"><span className="text-xl font-black text-slate-900">₹{parseInt(product.productPrice, 10).toLocaleString()}</span><Link href={`/gallery/product/${product.id}?vendor=${slug}`} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-3.5 py-2.5 text-xs font-bold text-white transition hover:bg-fuchsia-600">View Product <ArrowUpRight size={14} /></Link></div></div></article>)}</div> : <div className="rounded-[1.75rem] border border-dashed border-slate-300 bg-white px-6 py-16 text-center"><Package className="mx-auto text-slate-300" size={38} /><h3 className="mt-4 text-xl font-black text-slate-900">No products yet</h3><p className="mt-2 text-sm text-slate-500">This vendor has not listed any products yet. Check back soon.</p></div>}
 
-                {/* Product Info */}
-                <div className="p-5">
-                  <span className="inline-block rounded-full bg-purple-50 px-3 py-0.5 text-xs font-medium text-purple-600 mb-2">
-                    {product.category}
-                  </span>
-                  <h3 className="font-bold text-gray-900 leading-tight mb-1 line-clamp-2">
-                    {product.productTitle}
-                  </h3>
-
-                  {/* Rating placeholder */}
-                  <div className="flex items-center gap-1 text-amber-400 text-sm mb-3">
-                    <span>★★★★★</span>
-                    <span className="text-gray-400 text-xs ml-1">(24)</span>
-                  </div>
-
-                  <p className="text-sm text-gray-500 line-clamp-2 mb-4 leading-relaxed">
-                    {product.productDescription}
-                  </p>
-
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <span className="text-xl font-extrabold text-gray-900">
-                        ₹{parseInt(product.productPrice).toLocaleString()}
-                      </span>
-                    </div>
-                    <button
-                      onClick={() =>
-                        window.open(
-                          `https://instagram.com/${vendor.instagram_handle || slug}`,
-                          "_blank"
-                        )
-                      }
-                      className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white px-4 py-2 text-xs font-semibold shadow-md hover:scale-105 transition"
-                    >
-                      📸 View on IG
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="text-center py-20 bg-white rounded-2xl border border-gray-200">
-            <div className="text-6xl mb-4">📦</div>
-            <h3 className="text-xl font-bold text-gray-900 mb-2">
-              No products yet
-            </h3>
-            <p className="text-gray-500 max-w-md mx-auto">
-              This vendor hasn&apos;t listed any products yet. Check back soon for new arrivals!
-            </p>
-          </div>
-        )}
-
-        {/* Safety Notice */}
-        <div className="mt-12 rounded-2xl bg-amber-50 border border-amber-200 p-6">
-          <div className="flex items-start gap-3">
-            <span className="text-2xl">⚠️</span>
-            <div>
-              <h4 className="font-bold text-amber-800 text-sm">
-                Important Safety Notice
-              </h4>
-              <p className="text-sm text-amber-700 mt-1">
-                InstaBazaar is a discovery platform. All purchases are made directly
-                via Instagram. We do not process payments or handle transactions.
-                Please read our{" "}
-                <Link href="/warning" className="underline font-semibold">
-                  Safety Warning
-                </Link>{" "}
-                page before making any purchase.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
+          <div className="mt-12 rounded-[1.5rem] border border-amber-200 bg-amber-50 p-6"><div className="flex items-start gap-3"><span className="text-2xl">⚠️</span><div><h4 className="font-black text-amber-900">Shop safely</h4><p className="mt-1 text-sm leading-6 text-amber-800">InstaBazaar helps you discover stores. Confirm details with the vendor before purchasing, and read our <Link href="/legal/disclaimer" className="font-bold underline">safety disclaimer</Link>.</p></div></div></div>
+        </section>
+      </main>
+      <Footer />
+    </>
   );
 }
