@@ -18,11 +18,7 @@ export default function ProfileSidebar({ user, activeTab, setActiveTab }) {
       label: "Overview",
       icon: User,
     },
-    {
-      id: "favorites",
-      label: "Favorites",
-      icon: Heart,
-    },
+    
     {
       id: "reviews",
       label: "My Reviews",
@@ -60,33 +56,7 @@ export default function ProfileSidebar({ user, activeTab, setActiveTab }) {
             <p className="text-gray-500 text-sm">{user.username}</p>
           </div>
 
-          {/* Stats */}
 
-          <div className="grid grid-cols-3 gap-3 mt-8">
-            <div className="bg-purple-50 rounded-xl p-3 text-center">
-              <Heart className="mx-auto text-purple-600 mb-2" size={20} />
-
-              <h3 className="font-bold text-lg">{user.favorites}</h3>
-
-              <p className="text-xs text-gray-500">Favorites</p>
-            </div>
-
-            <div className="bg-pink-50 rounded-xl p-3 text-center">
-              <MessageCircle className="mx-auto text-pink-600 mb-2" size={20} />
-
-              <h3 className="font-bold text-lg">{user.reviews}</h3>
-
-              <p className="text-xs text-gray-500">Reviews</p>
-            </div>
-
-            <div className="bg-orange-50 rounded-xl p-3 text-center">
-              <Users className="mx-auto text-orange-600 mb-2" size={20} />
-
-              <h3 className="font-bold text-lg">{user.following}</h3>
-
-              <p className="text-xs text-gray-500">Following</p>
-            </div>
-          </div>
 
           {/* Navigation */}
 

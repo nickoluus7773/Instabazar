@@ -91,50 +91,6 @@ export default function ProfileOverview({ user, openEdit }) {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-3xl shadow-lg p-6 hover:shadow-xl transition">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-gray-500">Favorite Products</p>
-
-              <h2 className="text-4xl font-bold mt-2">{user.favorites}</h2>
-            </div>
-
-            <div className="bg-purple-100 p-4 rounded-full">
-              <Heart className="text-purple-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-3xl shadow-lg p-6 hover:shadow-xl transition">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-gray-500">Reviews Posted</p>
-
-              <h2 className="text-4xl font-bold mt-2">{user.reviews}</h2>
-            </div>
-
-            <div className="bg-pink-100 p-4 rounded-full">
-              <MessageCircle className="text-pink-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-3xl shadow-lg p-6 hover:shadow-xl transition">
-          <div className="flex justify-between items-center">
-            <div>
-              <p className="text-gray-500">Following Vendors</p>
-
-              <h2 className="text-4xl font-bold mt-2">{user.following}</h2>
-            </div>
-
-            <div className="bg-orange-100 p-4 rounded-full">
-              <Users className="text-orange-600" />
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* About */}
       <div className="bg-white rounded-3xl shadow-lg p-8">
