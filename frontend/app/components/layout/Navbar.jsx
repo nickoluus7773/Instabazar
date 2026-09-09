@@ -45,14 +45,14 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className="bg-white border-b shadow-sm sticky top-0 z-50">
+    <header className="bg-[#081225] border-b shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" className="text-3xl font-bold">
-          <span className="text-black">Insta</span>
-          <span className="text-purple-600">Bazaar</span>
+          <span className="text-white">Insta</span>
+          <span className="text-[#F5AE30]">Bazaar</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8">
+        <nav className="hidden md:flex items-center gap-8 text-white">
           <Link href="/">Home</Link>
           <Link href="/gallery">Gallery</Link>
           <Link href="/vendors">Vendors</Link>
@@ -67,7 +67,7 @@ export default function Navbar() {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen((prev) => !prev)}
-                    className="w-10 h-10 rounded-full border-2 border-purple-500 bg-white text-xl flex items-center justify-center hover:bg-purple-50 transition duration-200 focus:outline-none"
+                    className="w-10 h-10 rounded-full border-2 border-[#F5AE30]-500 bg-white text-xl flex items-center justify-center hover:bg-[#F5AE30]-50 transition duration-200 focus:outline-none"
                     aria-label="Profile Menu"
                   >
                     👤

@@ -96,16 +96,16 @@ export default function FeaturedProducts() {
   }
 
   return (
-    <section className="max-w-7xl mx-auto px-6 py-20">
+    <section className="bg-[#081225] max-w-8xl mx-auto px-6 py-20">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h2 className="text-3xl font-bold text-gray-900">Featured Products</h2>
+          <h2 className="text-3xl font-bold text-white">Featured Products</h2>
           <p className="text-sm text-gray-500 mt-1">Handpicked collection from active thrift stores</p>
         </div>
 
         <Link
           href="/gallery"
-          className="text-purple-600 font-bold hover:text-purple-700 transition flex items-center gap-1"
+          className="text-[#F5AE30] font-bold hover:text-purple-700 transition flex items-center gap-1"
         >
           View All →
         </Link>
