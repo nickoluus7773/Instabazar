@@ -22,18 +22,26 @@ export default function ManageProducts() {
     }
   }, [isLoggedIn, page]);
 
-  const fetchProducts = async () => {
+  async function fetchProducts() {
     try {
       const token = localStorage.getItem("accessToken");
       const data = await getVendorProducts(token, page, 10);
-      setProducts(data.results || []);
+      setProducts(
+        (data.results || []).map((product) => ({
+          ...product,
+          image: product.productImage || product.image,
+          title: product.productTitle || product.title,
+          price: product.productPrice ?? product.price,
+          is_active: product.is_active !== false,
+        }))
+      );
       setTotalPages(Math.ceil((data.count || 0) / 10));
     } catch (error) {
       console.error("Failed to fetch products:", error);
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const handleDelete = async (productId) => {
     if (confirm("Are you sure you want to delete this product?")) {
@@ -164,7 +172,7 @@ export default function ManageProducts() {
                             {product.image ? (
                               <img
                                 src={product.image}
-                                alt={product.title}
+                                alt={product.title || "Product"}
                                 className="w-full h-full object-cover"
                               />
                             ) : (

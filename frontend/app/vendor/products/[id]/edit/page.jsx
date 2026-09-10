@@ -18,31 +18,29 @@ export default function EditProduct() {
     price: "",
     category: "",
     stock: "",
-    is_active: true,
+    condition: "New",
+    size: "",
+    image_url: "",
   });
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      fetchProduct();
-    }
-  }, [isLoggedIn, productId]);
-
-  const fetchProduct = async () => {
+  async function fetchProduct() {
     try {
       const token = localStorage.getItem("accessToken");
       const data = await getVendorProducts(token, 1, 100);
       const product = data.results?.find((p) => p.id === parseInt(productId));
       if (product) {
         setFormData({
-          title: product.title,
-          description: product.description,
-          price: product.price,
+          title: product.productTitle || "",
+          description: product.productDescription || "",
+          price: product.productPrice || "",
           category: product.category || "",
-          stock: product.stock || "",
-          is_active: product.is_active,
+          stock: product.productStock ?? "",
+          condition: product.productCondition || "New",
+          size: product.productSize || "",
+          image_url: product.productImage || "",
         });
       }
     } catch (err) {
@@ -51,7 +49,13 @@ export default function EditProduct() {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      void Promise.resolve().then(() => fetchProduct());
+    }
+  }, [isLoggedIn, productId]);
 
   if (!isLoggedIn) {
     return (
@@ -195,30 +199,35 @@ export default function EditProduct() {
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select a category</option>
-                <option value="fashion">Fashion</option>
-                <option value="electronics">Electronics</option>
-                <option value="home">Home & Garden</option>
-                <option value="beauty">Beauty & Personal Care</option>
-                <option value="sports">Sports & Outdoors</option>
-                <option value="other">Other</option>
+                <option value="Clothing">Clothing</option>
+                <option value="Accessories">Accessories</option>
+                <option value="Home Decor">Home Decor</option>
+                <option value="Footwear">Footwear</option>
+                <option value="Jewelry">Jewelry</option>
+                <option value="Other">Other</option>
               </select>
             </div>
 
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="is_active"
-                name="is_active"
-                checked={formData.is_active}
-                onChange={handleChange}
-                className="w-4 h-4 rounded border-gray-300"
-              />
-              <label
-                htmlFor="is_active"
-                className="text-sm font-medium text-gray-700"
-              >
-                Active (visible to customers)
-              </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Condition</label>
+                <select name="condition" value={formData.condition} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                  <option value="New">New</option>
+                  <option value="Like New">Like New</option>
+                  <option value="Good">Good</option>
+                  <option value="Fair">Fair</option>
+                  <option value="Vintage">Vintage</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Size</label>
+                <input type="text" name="size" value={formData.size} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g. M or Free Size" />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Product image URL</label>
+              <input type="url" name="image_url" value={formData.image_url} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://..." />
             </div>
 
             <div className="flex gap-4 pt-4">
