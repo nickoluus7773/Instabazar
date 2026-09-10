@@ -17,8 +17,8 @@ export default function PrimaryCTA() {
         </p>
 
         <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-          <Button className="min-w-[190px]">Become a Vendor</Button>
-          <Button variant="secondary" className="min-w-[190px]">Explore Catalog</Button>
+          <Button href="/register/vendor" className="min-w-[190px]">Become a Vendor</Button>
+          <Button href="/gallery" variant="secondary" className="min-w-[190px]">Explore Catalog</Button>
         </div>
       </div>
     </SectionContainer>

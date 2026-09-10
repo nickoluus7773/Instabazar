@@ -11,7 +11,7 @@ const roadmap = [
 
 export default function Roadmap() {
   return (
-    <SectionContainer padding="py-24" className="bg-slate-50/70">
+    <SectionContainer padding="py-24" className="bg-[#f5f7fb]">
       <SectionHeading
         badge="🗺️ Roadmap"
         title="From a focused start"
@@ -45,8 +45,8 @@ export default function Roadmap() {
         </div>
 
         <div className="mt-8 flex flex-wrap gap-4 border-t border-slate-200 pt-8">
-          <Button>Explore the Platform</Button>
-          <Button variant="secondary">Join the Waitlist</Button>
+          <Button href="/">Explore the Platform</Button>
+          <Button href="/register/vendor" variant="secondary">Join the Waitlist</Button>
         </div>
       </Card>
     </SectionContainer>

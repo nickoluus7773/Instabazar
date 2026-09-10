@@ -49,7 +49,7 @@ const sections = [
 
 export default function PrivacyPolicyPage() {
   return (
-    <>
+    <main className="min-h-screen bg-[#f5f7fb]">
       <Navbar />
       <LegalPageTemplate
       badge="🔒 Privacy Policy"
@@ -58,6 +58,6 @@ export default function PrivacyPolicyPage() {
         sections={sections}
       />
       <Footer />
-    </>
+    </main>
   );
 }

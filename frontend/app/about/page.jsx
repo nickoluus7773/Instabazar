@@ -19,7 +19,7 @@ import {
 
 export default function AboutPage() {
   return (
-    <>
+    <main className="min-h-screen bg-[#f5f7fb]">
       <Navbar />
       <AboutHero />
       <OurStory />
@@ -36,6 +36,6 @@ export default function AboutPage() {
       <FooterCTA />
       
       <Footer />
-    </>
+    </main>
   );
 }

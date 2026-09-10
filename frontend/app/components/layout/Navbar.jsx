@@ -1,38 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { Menu, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState, useRef } from "react";
-import API_BASE_URL from "@/lib/api";
 
 export default function Navbar() {
-  const { isLoggedIn, isVendor: authIsVendor, logout } = useAuth();
-  const [isVendor, setIsVendor] = useState(authIsVendor || false);
+  const { isLoggedIn, isVendor, logout } = useAuth();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    if (authIsVendor) {
-      setIsVendor(true);
-      return;
-    }
-    if (isLoggedIn) {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        fetch(`${API_BASE_URL}/api/vendor/profile/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-          .then((res) => {
-            setIsVendor(res.ok);
-          })
-          .catch(() => setIsVendor(false));
-      }
-    } else {
-      setIsVendor(false);
-    }
-  }, [isLoggedIn, authIsVendor]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -45,7 +22,7 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className="bg-[#081225] border-b shadow-sm sticky top-0 z-50">
+    <header className="bg-[#081225] border-b border-white/10 shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" className="text-3xl font-bold">
           <span className="text-white">Insta</span>
@@ -67,7 +44,7 @@ export default function Navbar() {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen((prev) => !prev)}
-                    className="w-10 h-10 rounded-full border-2 border-[#F5AE30]-500 bg-white text-xl flex items-center justify-center hover:bg-[#F5AE30]-50 transition duration-200 focus:outline-none"
+                    className="w-10 h-10 rounded-full border-2 border-[#F5AE30] bg-white text-xl flex items-center justify-center hover:bg-[#F5AE30]/10 transition duration-200 focus:outline-none"
                     aria-label="Profile Menu"
                   >
                     👤

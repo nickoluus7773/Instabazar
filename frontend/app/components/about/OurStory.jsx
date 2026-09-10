@@ -31,7 +31,7 @@ const timeline = [
 
 export default function OurStory() {
   return (
-    <SectionContainer padding="py-24" className="border-t border-slate-100 bg-gradient-to-b from-white via-slate-50/70 to-white">
+    <SectionContainer padding="py-24" className="border-t border-slate-100 bg-white">
       <SectionHeading
         badge="📖 Our Story"
         title="Built Around Real"
@@ -81,14 +81,14 @@ export default function OurStory() {
           </p>
 
           <div className="mt-10 grid grid-cols-2 gap-4">
-            <div className="rounded-2xl bg-slate-50 p-6 text-center">
+            <div className="rounded-2xl bg-[#f5f7fb] p-6 text-center">
               <h4 className="text-4xl font-black bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
                 100%
               </h4>
               <p className="mt-2 text-sm text-slate-500">Vendor Focused</p>
             </div>
 
-            <div className="rounded-2xl bg-slate-50 p-6 text-center">
+            <div className="rounded-2xl bg-[#f5f7fb] p-6 text-center">
               <h4 className="text-4xl font-black bg-gradient-to-r from-purple-600 to-pink-500 bg-clip-text text-transparent">
                 SaaS
               </h4>

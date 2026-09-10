@@ -10,7 +10,7 @@ export default function PricingCard({ plan, isPopular = false, billingMode = "mo
     <Card
       className={`relative p-8 ${
         isPopular
-          ? "border-pink-300 shadow-[0_30px_80px_-35px_rgba(236,72,153,0.7)] scale-[1.02]"
+          ? "border-pink-300 shadow-[0_30px_80px_-35px_rgba(236,72,153,0.7)]"
           : ""
       }`}
     >
@@ -61,8 +61,9 @@ export default function PricingCard({ plan, isPopular = false, billingMode = "mo
       </div>
 
       <Button
-        variant={isPopular ? "primary" : "secondary"}
-        className={`mt-8 w-full ${isPopular ? "" : "bg-slate-900 text-white hover:bg-slate-800"}`}
+        href={plan.ctaHref}
+        variant={isPopular ? "primary" : "dark"}
+        className="mt-8 w-full shrink-0"
       >
         {plan.cta}
         <ArrowRight className="ml-2 h-4 w-4" />

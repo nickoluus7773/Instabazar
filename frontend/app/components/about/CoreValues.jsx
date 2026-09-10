@@ -32,7 +32,7 @@ const values = [
 
 export default function CoreValues() {
   return (
-    <SectionContainer className="bg-slate-50">
+    <SectionContainer className="bg-[#f5f7fb]">
       <SectionHeading
         badge="🌟 Core Values"
         title="The Principles Behind"

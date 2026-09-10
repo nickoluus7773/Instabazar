@@ -17,7 +17,7 @@ const pillars = [
 
 export default function MissionVision() {
   return (
-    <SectionContainer padding="py-24" className="bg-slate-50/70">
+    <SectionContainer padding="py-24" className="bg-[#f5f7fb]">
       <SectionHeading
         badge="🎯 Mission & Vision"
         title="A platform designed to"

@@ -10,6 +10,7 @@ import PricingCard from "../components/subscription/PricingCard";
 import FeatureComparison from "../components/subscription/FeatureComparison";
 import BenefitCards from "../components/subscription/BenefitCards";
 import FaqAccordion from "../components/subscription/FaqAccordion";
+import { useAuth } from "@/context/AuthContext";
 
 const plans = [
   {
@@ -18,6 +19,7 @@ const plans = [
     monthlyPrice: 0,
     yearlyPrice: 0,
     cta: "Start Free",
+    ctaHref: "/register",
     features: [
       { text: "10 Product Listings", included: true },
       { text: "Basic Analytics", included: true },
@@ -34,6 +36,7 @@ const plans = [
     monthlyPrice: 149,
     yearlyPrice: 119,
     cta: "Get Started",
+    ctaHref: "/register",
     features: [
       { text: "50 Product Listings", included: true },
       { text: "Standard Analytics", included: true },
@@ -50,6 +53,7 @@ const plans = [
     monthlyPrice: 249,
     yearlyPrice: 199,
     cta: "Upgrade Now",
+    ctaHref: "/register",
     features: [
       { text: "Unlimited Product Listings", included: true },
       { text: "Advanced Analytics", included: true },
@@ -91,6 +95,8 @@ const faqItems = [
 
 export default function SubscriptionPage() {
   const [billingMode, setBillingMode] = useState("monthly");
+  const { isLoggedIn, isVendor } = useAuth();
+  const dashboardHref = isLoggedIn && isVendor ? "/vendor/dashboard" : "/login";
 
   return (
     <>
@@ -116,7 +122,7 @@ export default function SubscriptionPage() {
           </p>
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-4">
-            <Button>Start Free</Button>
+            <Button href="/register">Start Free</Button>
             <Button variant="secondary">Compare Plans</Button>
           </div>
 
@@ -143,7 +149,7 @@ export default function SubscriptionPage() {
       </SectionContainer>
 
       <SectionContainer padding="pb-24" className="bg-white">
-        <div className="grid gap-8 md:grid-cols-2 xl:grid-cols-3">
+        <div className="mx-auto flex max-w-4xl flex-col gap-8">
           {plans.map((plan) => (
             <PricingCard
               key={plan.name}
@@ -197,9 +203,9 @@ export default function SubscriptionPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-4">
-            <Button>Start Free</Button>
-            <Button variant="secondary">View Dashboard</Button>
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:shrink-0">
+            <Button href="/register" className="w-full sm:w-auto">Start Free</Button>
+            <Button href={dashboardHref} variant="secondary" className="w-full sm:w-auto">View Dashboard</Button>
           </div>
         </div>
       </SectionContainer>

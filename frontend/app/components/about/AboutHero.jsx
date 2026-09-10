@@ -7,7 +7,7 @@ export default function AboutHero() {
   return (
     <SectionContainer
       padding="pt-24 pb-16 lg:pt-28 lg:pb-20"
-      className="relative overflow-hidden bg-gradient-to-b from-white via-purple-50/30 to-white"
+      className="relative overflow-hidden bg-white"
     >
       <div className="absolute -top-24 -left-24 h-72 w-72 rounded-full bg-purple-200/30 blur-3xl"></div>
       <div className="absolute bottom-8 right-0 h-80 w-80 rounded-full bg-pink-200/30 blur-3xl"></div>
@@ -33,8 +33,8 @@ export default function AboutHero() {
           </p>
 
           <div className="mt-10 flex flex-wrap gap-4 sm:gap-5">
-            <Button>Browse Vendors</Button>
-            <Button variant="secondary">Become a Vendor</Button>
+            <Button href="/vendors">Browse Vendors</Button>
+            <Button href="/register/vendor" variant="secondary">Become a Vendor</Button>
           </div>
         </div>
 
@@ -57,7 +57,7 @@ export default function AboutHero() {
                 ["Categories", "42"],
                 ["Orders", "820+"],
               ].map(([label, value]) => (
-                <div key={label} className="rounded-2xl bg-slate-50 p-5 sm:p-6">
+                <div key={label} className="rounded-2xl bg-[#f5f7fb] p-5 sm:p-6">
                   <p className="text-sm text-slate-500">{label}</p>
                   <h2 className="mt-2 text-3xl font-bold text-slate-900 sm:text-4xl">
                     {value}

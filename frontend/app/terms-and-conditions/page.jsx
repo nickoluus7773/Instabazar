@@ -49,7 +49,7 @@ const sections = [
 
 export default function TermsAndConditionsPage() {
   return (
-    <>
+    <main className="min-h-screen bg-[#f5f7fb]">
       <Navbar />
       <LegalPageTemplate
       badge="📄 Terms & Conditions"
@@ -58,6 +58,6 @@ export default function TermsAndConditionsPage() {
         sections={sections}
       />
       <Footer />
-    </>
+    </main>
   );
 }

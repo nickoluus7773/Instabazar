@@ -3,7 +3,7 @@ import SectionContainer from "../ui/SectionContainer";
 
 export default function FooterCTA() {
   return (
-    <SectionContainer padding="py-16" className="bg-slate-50">
+    <SectionContainer padding="py-16" className="bg-[#f5f7fb]">
       <div className="mx-auto flex max-w-4xl flex-col gap-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">
@@ -13,7 +13,7 @@ export default function FooterCTA() {
             Ready to set your catalog up for growth?
           </h3>
         </div>
-        <Button>Start Your Free Trial</Button>
+        <Button href="/register/vendor">Start Your Free Trial</Button>
       </div>
     </SectionContainer>
   );
