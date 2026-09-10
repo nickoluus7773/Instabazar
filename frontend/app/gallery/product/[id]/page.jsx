@@ -1,17 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "../../../components/layout/Navbar";
 import Footer from "../../../components/home/Footer";
+import API_BASE_URL from "@/lib/api";
+import { getAllProducts, getVendorStoreData } from "../../../data/vendorStoreData";
 
 // Helper function to safely extract string name from category (string or object)
 function getCategoryName(category) {
-  if (!category) return "Uncategorized";
+  if (!category) return "Handmade";
   if (typeof category === "string") return category.trim();
   if (typeof category === "object") {
-    return (category.categoryName || category.name || "Other").trim();
+    return (category.categoryName || category.name || "Handmade").trim();
   }
   return String(category).trim();
 }
@@ -27,7 +29,9 @@ const FALLBACK_PRODUCTS = [
     productSize: "M",
     productCondition: "New",
     category: "Clothing",
-    vendor: "Demo Store",
+    vendor: "KnotCraft Studio",
+    instagram_handle: "knotcraft.official",
+    followers: "14.2k",
   },
   {
     id: 2,
@@ -39,19 +43,24 @@ const FALLBACK_PRODUCTS = [
     productSize: "Free Size",
     productCondition: "New",
     category: "Accessories",
-    vendor: "Demo Store",
+    vendor: "Aura Jewels",
+    instagram_handle: "aurajewels.in",
+    followers: "8.9k",
   },
   {
     id: 3,
     productTitle: "Macrame Wall Hanging",
-    productDescription: "Hand-knotted macrame wall hanging made with 100% cotton rope. Adds a boho touch to any room.",
-    productPrice: "899.00",
+    productDescription: "A beautiful handwoven macramé wall hanging made with 100% cotton rope. Perfect for adding warmth to any room. Each piece is unique and made to order.",
+    productPrice: "649.00",
+    productOriginalPrice: "899.00",
     productImage: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600",
     productStock: 8,
     productSize: "Standard",
     productCondition: "New",
-    category: "Home Decor",
-    vendor: "Demo Store",
+    category: "Handmade",
+    vendor: "TheKnotCo",
+    instagram_handle: "theknotco",
+    followers: "14.2k",
   },
   {
     id: 4,
@@ -63,7 +72,9 @@ const FALLBACK_PRODUCTS = [
     productSize: "Large",
     productCondition: "New",
     category: "Accessories",
-    vendor: "Demo Store",
+    vendor: "Jaipur Prints",
+    instagram_handle: "jaipurprints.co",
+    followers: "22.5k",
   },
   {
     id: 5,
@@ -75,7 +86,9 @@ const FALLBACK_PRODUCTS = [
     productSize: "One Size",
     productCondition: "New",
     category: "Clothing",
-    vendor: "Demo Store",
+    vendor: "Bagru Indigo",
+    instagram_handle: "bagruindigo",
+    followers: "11.1k",
   },
   {
     id: 6,
@@ -87,25 +100,39 @@ const FALLBACK_PRODUCTS = [
     productSize: "Medium",
     productCondition: "New",
     category: "Home Decor",
-    vendor: "Demo Store",
+    vendor: "Clay & Co",
+    instagram_handle: "clayandco",
+    followers: "5.4k",
   },
 ];
 
+const STORE_PRODUCTS = typeof getAllProducts === "function" ? getAllProducts() : [];
+
 export default function ProductDetailPage() {
   const params = useParams();
-  
-  // Find matching initial fallback item if exists, otherwise null to wait for live API
+  const searchParams = useSearchParams();
+  const vendorSlug = searchParams?.get("vendor");
+  const vendorProducts = vendorSlug && typeof getVendorStoreData === "function"
+    ? getVendorStoreData(vendorSlug)?.products || []
+    : [];
+
   const initialProduct =
-    FALLBACK_PRODUCTS.find((p) => String(p.id) === String(params.id)) || null;
+    vendorProducts.find((p) => String(p.id) === String(params?.id)) ||
+    FALLBACK_PRODUCTS.find((p) => String(p.id) === String(params?.id)) ||
+    STORE_PRODUCTS.find((p) => String(p.id) === String(params?.id)) ||
+    null;
 
   const [product, setProduct] = useState(initialProduct);
   const [loading, setLoading] = useState(!initialProduct);
   const [favorite, setFavorite] = useState(false);
-  const [activeImage, setActiveImage] = useState("");
+  const [quantity, setQuantity] = useState(1);
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
-    fetchLiveProduct();
-  }, [params.id]);
+    if (!vendorSlug) {
+      fetchLiveProduct();
+    }
+  }, [params?.id, vendorSlug]);
 
   useEffect(() => {
     if (product) {
@@ -117,19 +144,11 @@ export default function ProductDetailPage() {
   }, [product]);
 
   async function fetchLiveProduct() {
-    // List candidate URLs: relative Next.js proxy route first, then direct backend URLs
     const urlsToTry = [
-      `/api/products/${params.id}/`,
-      `http://127.0.0.1:8000/api/products/${params.id}/`,
-      `http://localhost:8000/api/products/${params.id}/`,
+      `/api/products/${params?.id}/`,
+      `${API_BASE_URL}/api/products/${params?.id}/`,
+      `http://127.0.0.1:8000/api/products/${params?.id}/`,
     ];
-
-    if (typeof window !== "undefined" && window.location.hostname) {
-      const hostUrl = `http://${window.location.hostname}:8000/api/products/${params.id}/`;
-      if (!urlsToTry.includes(hostUrl)) {
-        urlsToTry.push(hostUrl);
-      }
-    }
 
     for (const url of urlsToTry) {
       try {
@@ -138,7 +157,7 @@ export default function ProductDetailPage() {
           const data = await res.json();
           setProduct(data);
           setLoading(false);
-          return; // Successfully fetched exact product details from live Django API
+          return;
         }
       } catch {
         // Try next candidate URL
@@ -168,184 +187,298 @@ export default function ProductDetailPage() {
   /* Loading State */
   if (loading) {
     return (
-      <>
+      <div className="min-h-screen bg-[#FDFBF7] flex flex-col justify-between">
         <Navbar />
-        <div className="min-h-screen bg-gray-100 flex flex-col justify-center items-center gap-4">
+        <div className="flex flex-col justify-center items-center gap-4 py-24">
           <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
           <p className="text-gray-500 font-medium">Loading product details...</p>
         </div>
-      </>
+        <Footer />
+      </div>
     );
   }
 
   if (!product) {
     return (
-      <>
+      <div className="min-h-screen bg-[#FDFBF7] flex flex-col justify-between">
         <Navbar />
-        <div className="min-h-screen bg-gray-100 flex flex-col justify-center items-center gap-4 px-6 text-center">
-          <p className="text-red-600 font-bold text-xl">Product #{params.id} not found</p>
+        <div className="flex flex-col justify-center items-center gap-4 px-6 text-center py-24">
+          <p className="text-red-600 font-bold text-xl">Product #{params?.id} not found</p>
           <Link
             href="/gallery"
             className="px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition"
           >
-            ΓåÉ Back to Gallery
+            ← Back to Gallery
           </Link>
         </div>
-      </>
+        <Footer />
+      </div>
     );
   }
 
+  const title = product.productTitle || product.title || "Product";
   const categoryName = getCategoryName(product.category);
+  const currentPrice = parseFloat(product.productPrice || product.price || "649");
+  const originalPrice = parseFloat(
+    product.productOriginalPrice ||
+    product.originalPrice ||
+    (currentPrice ? (currentPrice + 250).toFixed(0) : "899")
+  );
+  const savings = Math.max(0, originalPrice - currentPrice);
+
+  // Normalize image list or provide clean fallbacks
   const productImages = [
-    product.productImage,
+    product.productImage || product.image,
     ...(Array.isArray(product.productImages) ? product.productImages : []),
     ...(Array.isArray(product.images) ? product.images : []),
-  ].filter((image, index, images) =>
-    typeof image === "string" && image.trim() && images.indexOf(image) === index
-  );
-  const mainImage = productImages.includes(activeImage)
-    ? activeImage
-    : productImages[0];
-  const stockCount = Number(product.productStock ?? 0);
-  const isAvailable = stockCount > 0;
-  const savingsAmount = Number(product.savingsAmount ?? product.savings_amount ?? 250);
-  const productTags = [categoryName, product.productCondition, product.productSize]
-    .filter(Boolean)
-    .map((tag) => `#${String(tag).toLowerCase().replace(/\s+/g, "")}`);
+  ].filter((img, idx, arr) => typeof img === "string" && img.trim() && arr.indexOf(img) === idx);
+
+  const displayImages =
+    productImages.length > 0
+      ? productImages
+      : ["https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600"];
+
+  const mainImageUrl = displayImages[activeImageIndex] || displayImages[0];
+
+  const vendorName =
+    typeof product.vendor === "object"
+      ? product.vendor?.business_name || product.vendor?.name || "TheKnotCo"
+      : product.vendor || "TheKnotCo";
+
+  const instagramHandle =
+    product.instagram_handle ||
+    (typeof product.vendor === "object" && product.vendor?.instagram_handle) ||
+    vendorName.toLowerCase().replace(/\s+/g, "");
+
+  const vendorFollowers = product.followers || "14.2k";
+
+  const tags = [
+    categoryName.toLowerCase(),
+    "home",
+    "handmade",
+  ].filter((t, i, arr) => arr.indexOf(t) === i);
 
   return (
-    <>
+    <div className="min-h-screen bg-[#FBF9F4] text-slate-800 flex flex-col justify-between font-sans">
       <Navbar />
 
-      <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 sm:py-12">
-        <div className="mx-auto max-w-7xl">
-          <Link
-            href="/gallery"
-            className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 transition hover:text-purple-700"
-          >
-            <span className="text-lg">ΓåÉ</span> Back to Gallery
-          </Link>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 w-full flex-1">
+        {/* Breadcrumb Header */}
+        <nav className="text-xs sm:text-sm text-slate-500 mb-6 flex items-center gap-2 flex-wrap">
+          <Link href="/" className="hover:text-purple-600 transition">Home</Link>
+          <span>/</span>
+          <Link href="/gallery" className="hover:text-purple-600 transition">{categoryName}</Link>
+          <span>/</span>
+          <span className="text-slate-800 font-medium truncate max-w-xs sm:max-w-md">{title}</span>
+        </nav>
 
-          <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:gap-12 xl:gap-16">
-            {/* IMAGE */}
-            <section className="min-w-0">
-              <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
-                <span className="absolute left-5 top-5 z-10 rounded-full bg-slate-900/80 px-3.5 py-1.5 text-xs font-bold text-white backdrop-blur">{categoryName}</span>
-                <span className="absolute right-5 top-5 z-10 rounded-full bg-white/90 px-3.5 py-1.5 text-xs font-bold text-purple-700 shadow-sm backdrop-blur">{product.productCondition || "New"}</span>
-                <div className="aspect-square bg-slate-100 sm:aspect-[1.06]">
+        {/* Product Layout: 2 Columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-start">
+          {/* Left Column: Image Preview + Thumbnails */}
+          <div className="lg:col-span-6 flex flex-col items-center">
+            {/* Main Image Box with soft curved corners */}
+            <div className="w-full aspect-square max-w-[500px] bg-[#F4EFE6]/60 rounded-3xl p-6 sm:p-8 flex items-center justify-center border border-stone-200/70 shadow-sm relative overflow-hidden">
               <img
-                src={mainImage}
-                alt={product.productTitle}
-                  className="h-full w-full object-cover"
+                src={mainImageUrl}
+                alt={title}
+                className="w-full h-full object-contain mix-blend-multiply drop-shadow-md transition-all duration-300 hover:scale-105"
                 onError={(e) => {
-                  e.currentTarget.src =
-                    "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600";
+                  e.currentTarget.src = "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600";
                 }}
               />
-                </div>
-              </div>
-              {productImages.length > 1 && (
-                <>
-                  <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
-                    {productImages.map((image, index) => (
-                      <button key={image} type="button" onClick={() => setActiveImage(image)} className={`h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 bg-white p-1 transition sm:h-24 sm:w-24 ${mainImage === image ? "border-purple-600 shadow-md shadow-purple-100" : "border-transparent hover:border-purple-200"}`} aria-label={`View product image ${index + 1}`}>
-                        <img src={image} alt="" className="h-full w-full rounded-xl object-cover" />
-                      </button>
-                    ))}
-                  </div>
-                  <p className="mt-3 text-xs font-medium text-slate-400">Select an image to view more product details.</p>
-                </>
-              )}
-            </section>
+            </div>
 
-            {/* DETAILS */}
-            <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:self-start">
-
-              <div className="flex items-start justify-between gap-5">
-                <div>
-                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-purple-600">Curated find</p>
-                  <h1 className="mt-2 text-3xl font-black leading-tight text-slate-900 sm:text-4xl">{product.productTitle}</h1>
-                </div>
-
+            {/* Thumbnails Row */}
+            <div className="flex items-center justify-center gap-3 sm:gap-4 mt-6 flex-wrap">
+              {displayImages.map((img, idx) => (
                 <button
+                  key={idx}
                   type="button"
-                  onClick={toggleFavorite}
-                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-2xl shadow-sm transition hover:scale-105 hover:border-pink-200"
-                  aria-label={favorite ? "Remove from wishlist" : "Add to wishlist"}
+                  onClick={() => setActiveImageIndex(idx)}
+                  className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-[#F4EFE6]/70 border-2 flex items-center justify-center p-2 cursor-pointer transition-all ${
+                    activeImageIndex === idx
+                      ? "border-orange-500 shadow-md ring-2 ring-orange-200"
+                      : "border-stone-200 hover:border-stone-300 opacity-80 hover:opacity-100"
+                  }`}
                 >
-                  {favorite ? "Γ¥ñ∩╕Å" : "≡ƒñì"}
+                  <img
+                    src={img}
+                    alt={`Thumbnail ${idx + 1}`}
+                    className="w-full h-full object-contain mix-blend-multiply"
+                  />
                 </button>
-              </div>
-
-              <p className="mt-5 text-4xl font-black text-purple-700">
-                Γé╣{product.productPrice}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ${isAvailable ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-600"}`}>
-                  <span className={`h-2 w-2 rounded-full ${isAvailable ? "bg-emerald-500" : "bg-rose-500"}`} />
-                  {isAvailable ? "In stock" : "Out of stock"}
-                </span>
-                {isAvailable && <span className="rounded-full bg-orange-50 px-3 py-1.5 text-xs font-bold text-orange-700">Only {stockCount} left</span>}
-                {Number.isFinite(savingsAmount) && savingsAmount > 0 && <span className="rounded-full bg-pink-50 px-3 py-1.5 text-xs font-bold text-pink-700">Save Γé╣{savingsAmount}</span>}
-                <span className="rounded-full bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-700">Direct from vendor</span>
-              </div>
-
-              <div className="mt-7 grid grid-cols-2 gap-3 border-y border-slate-100 py-5 text-sm">
-                <div className="rounded-2xl bg-slate-50 px-4 py-3"><p className="text-xs font-bold uppercase tracking-wide text-slate-400">Condition</p><p className="mt-1 font-bold text-slate-800">{product.productCondition || "New"}</p></div>
-                <div className="rounded-2xl bg-slate-50 px-4 py-3"><p className="text-xs font-bold uppercase tracking-wide text-slate-400">Size</p><p className="mt-1 font-bold text-slate-800">{product.productSize || "Not specified"}</p></div>
-              </div>
-
-              <div className="mt-7">
-                <h2 className="text-lg font-black text-slate-900">About this product</h2>
-                <p className="mt-2 text-sm leading-7 text-slate-600 sm:text-base">{product.productDescription || "Ask the vendor for more details about this find."}</p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {productTags.map((tag) => <span key={tag} className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500">{tag}</span>)}
-                </div>
-              </div>
-
-              {product.vendor && (
-                <div className="mt-6 flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-pink-500 text-sm font-black text-white">{String(typeof product.vendor === "object" ? product.vendor?.business_name || product.vendor?.name || "V" : product.vendor).charAt(0).toUpperCase()}</div>
-                  <div><p className="text-xs font-bold uppercase tracking-wide text-slate-400">Listed by</p><p className="font-bold text-slate-800">{typeof product.vendor === "object" ? product.vendor?.business_name || product.vendor?.name : product.vendor}</p></div>
-                </div>
-              )}
-
-              <a
-                href="https://www.instagram.com/instabazaar.official/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-8 flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 py-4 text-center text-base font-bold text-white shadow-lg transition duration-200 hover:scale-[1.02]"
-              >
-                <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
-                  <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                </svg>
-                <span>DM on Instagram</span>
-              </a>
-              <p className="mt-3 text-center text-xs leading-5 text-slate-400">You will continue your purchase directly with the vendor on Instagram.</p>
-            </section>
+              ))}
+            </div>
           </div>
 
-          <section className="mt-10 grid gap-5 md:grid-cols-3">
-            <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-100 text-xl">Γ£ª</div>
-              <h2 className="mt-5 text-lg font-black text-slate-900">Why it stands out</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">A one-of-a-kind discovery selected from an independent vendor catalogΓÇönot a mass-market listing.</p>
-            </article>
-            <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-xl">Γ£ô</div>
-              <h2 className="mt-5 text-lg font-black text-slate-900">Before you message</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Confirm availability, sizing, condition, delivery and final price directly with the vendor before purchasing.</p>
-            </article>
-            <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-100 text-xl">ΓÖí</div>
-              <h2 className="mt-5 text-lg font-black text-slate-900">Love this find?</h2>
-              <p className="mt-2 text-sm leading-6 text-slate-600">Save it to your wishlist, then return when you are ready to connect with the seller.</p>
-              <button type="button" onClick={toggleFavorite} className="mt-4 text-sm font-bold text-purple-700 hover:text-purple-900">{favorite ? "Saved to wishlist" : "Save for later"} ΓåÆ</button>
-            </article>
-          </section>
+          {/* Right Column: Details & Actions */}
+          <div className="lg:col-span-6 space-y-6">
+            <div>
+              <span className="text-xs font-bold text-orange-500 uppercase tracking-wider block mb-1">
+                Best Seller
+              </span>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 leading-tight">
+                {title}
+              </h1>
+
+              {/* Rating & Stock */}
+              <div className="flex items-center gap-3 mt-2.5 text-xs sm:text-sm">
+                <div className="flex items-center text-amber-500 font-bold">
+                  <span></span>
+                  <span className="text-slate-600 ml-1.5 font-semibold"></span>
+                </div>
+                <span className="text-emerald-700 font-bold bg-emerald-100/70 px-2.5 py-0.5 rounded-full text-xs flex items-center gap-1">
+                  
+                </span>
+              </div>
+            </div>
+
+            {/* Price section */}
+            <div className="flex items-baseline gap-3">
+              <span className="text-3xl sm:text-4xl font-black text-orange-500">
+                ₹{currentPrice.toFixed(0)}
+              </span>
+              {originalPrice > currentPrice && (
+                <span className="text-lg sm:text-xl text-slate-400 line-through font-semibold">
+                  ₹{originalPrice.toFixed(0)}
+                </span>
+              )}
+              {savings > 0 && (
+                <span className="text-xs sm:text-sm font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                  Save ₹{savings.toFixed(0)}
+                </span>
+              )}
+            </div>
+
+            {/* Description */}
+            <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
+              {product.productDescription ||
+                "A beautiful handcrafted find curated from Instagram creators. Made with premium quality materials, perfect for adding authentic charm to your collection."}
+            </p>
+
+            {/* Tags */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {tags.map((tag, idx) => (
+                <span
+                  key={idx}
+                  className="px-3 py-1 bg-stone-100/80 hover:bg-stone-200 text-slate-600 text-xs font-semibold rounded-full border border-stone-200/80 transition"
+                >
+                  #{tag}
+                </span>
+              ))}
+            </div>
+
+            {/* Quantity Stepper 
+            <div className="flex items-center gap-3 pt-2">
+              <span className="text-xs sm:text-sm font-semibold text-slate-700">Quantity</span>
+              <div className="inline-flex items-center border border-stone-300 rounded-xl bg-white overflow-hidden shadow-xs">
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  className="px-3 py-1.5 text-slate-600 hover:bg-stone-100 transition font-bold text-sm"
+                >
+                  -
+                </button>
+                <span className="px-4 py-1.5 text-xs sm:text-sm font-bold text-slate-800">
+                  {quantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setQuantity((q) => q + 1)}
+                  className="px-3 py-1.5 text-slate-600 hover:bg-stone-100 transition font-bold text-sm"
+                >
+                  +
+                </button>
+              </div>
+            </div>*/}
+
+            {/* CTA Buttons: Instagram DM + Save */}
+            <div className="flex items-center gap-3 pt-2">
+              <a
+                href={`https://www.instagram.com/${instagramHandle}/`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 sm:flex-initial sm:px-8 py-3.5 bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold rounded-2xl text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-center"
+              >
+                <span>🛍️</span>
+                <span>View on Instagram</span>
+              </a>
+
+              <button
+                type="button"
+                onClick={toggleFavorite}
+                className="px-5 py-3.5 rounded-2xl border border-stone-300 bg-white hover:bg-stone-50 font-bold text-sm text-slate-700 shadow-xs transition flex items-center gap-1.5 cursor-pointer"
+              >
+                <span>{favorite ? "❤️" : "🤍"}</span>
+                <span>{favorite ? "Saved" : "Save"}</span>
+              </button>
+            </div>
+
+            {/* Vendor Mini Profile Card */}
+            <div className="p-4 rounded-2xl border border-stone-200/80 bg-white shadow-xs flex items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 rounded-full bg-emerald-600 text-white font-black text-lg flex items-center justify-center shadow-xs">
+                  {vendorName.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-slate-900 text-sm">{vendorName}</span>
+                    <span className="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.2 rounded-md border border-emerald-200">
+                      ✓ Verified
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {vendorFollowers} followers • {categoryName}
+                  </p>
+                  <p className="text-[11px] text-purple-600 font-medium">@{instagramHandle}</p>
+                </div>
+              </div>
+              <span className="text-stone-400 text-lg">›</span>
+            </div>
+
+            {/* Specs Table */}
+            <div className="border-t border-stone-200/80 pt-4 text-xs sm:text-sm space-y-2.5">
+              <div className="flex justify-between py-1">
+                <span className="text-slate-500">Category</span>
+                <span className="font-semibold text-slate-800">{categoryName}</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-slate-500">Vendor</span>
+                <span className="font-semibold text-slate-800">{vendorName}</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-slate-500">Purchase via</span>
+                <span className="font-semibold text-slate-800">Instagram DM</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-slate-500">Returns</span>
+                <span className="font-semibold text-slate-800">Contact vendor</span>
+              </div>
+            </div>
+
+            {/* Safety Tips Banner */}
+            <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 text-xs text-amber-900 leading-relaxed flex items-start gap-2">
+              <span className="text-amber-600 font-bold">⚠️</span>
+              <p>
+                InstaBazaar is a discovery platform. Purchases are made directly on Instagram.{" "}
+              
+              </p>
+            </div>
+          </div>
         </div>
+
+        {/* "More from [Vendor]" section */}
+        <section className="mt-16 pt-8 border-t border-stone-200/80">
+          <h2 className="text-lg sm:text-xl font-bold text-slate-900">
+            More from {vendorName}
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-500 mt-2">
+            No other products from this vendor yet.
+          </p>
+        </section>
       </main>
+
       <Footer />
-    </>
+    </div>
   );
 }

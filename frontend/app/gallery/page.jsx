@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/home/Footer";
+import API_BASE_URL from "@/lib/api";
 
 // Helper function to safely extract string name from category (string or object)
 function getCategoryName(category) {
@@ -164,8 +165,9 @@ function ProductCard({ product }) {
   const categoryName = getCategoryName(product.category);
 
   return (
+    <div className="mb-10 ">
     <Link href={`/gallery/product/${product.id}`}>
-      <article className="group bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-2xl hover:border-purple-200 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer flex flex-col h-full relative">
+      <article className="group bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-2xl hover:border-purple-200 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer flex flex-col h-full relative ">
         {/* Product Image & Badges */}
         <div className="relative h-64 bg-slate-100 overflow-hidden">
           <img
@@ -216,6 +218,7 @@ function ProductCard({ product }) {
         </div>
       </article>
     </Link>
+    </div>
   );
 }
 
@@ -235,6 +238,7 @@ export default function GalleryPage() {
 
   async function fetchLiveProducts() {
     const urlsToTry = [
+      `${API_BASE_URL}/api/products/`,
       "/api/products/",
       "http://127.0.0.1:8000/api/products/",
       "http://localhost:8000/api/products/",
@@ -252,8 +256,12 @@ export default function GalleryPage() {
         const res = await fetch(url, { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            setProducts(data);
+          const items = Array.isArray(data) ? data : data?.results;
+          if (Array.isArray(items) && items.length > 0) {
+            setProducts(items);
+            setIsLiveApi(true);
+            return;
+          } else if (res.ok) {
             setIsLiveApi(true);
             return;
           }
@@ -362,42 +370,31 @@ export default function GalleryPage() {
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-slate-50/70 py-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+      <main className="min-h-screen bg-slate-50/70 ">
+        <div className="max-w-7xl ">
 
-          {/* Backend Status Notice */}
-          {!isLiveApi && (
-            <div className="bg-amber-50/90 border border-amber-200 text-amber-900 px-5 py-3.5 rounded-2xl mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm shadow-sm">
-              <div className="flex items-center gap-2">
-                <span className="text-base">⚠️</span>
-                <span>
-                  <strong>Django Backend Offline:</strong> Showing cached catalog products. Run `python manage.py runserver 127.0.0.1:8000` to connect live database!
-                </span>
-              </div>
-              <button
-                onClick={fetchLiveProducts}
-                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition shadow cursor-pointer shrink-0"
-              >
-                Refresh Connection
-              </button>
-            </div>
-          )}
-
-          {/* Header Banner */}
-          <div className="mb-8">
+        <section className="relative overflow-hidden bg-slate-950 text-white">
+        <div className="absolute -right-28 -top-36 h-96 w-96 rounded-full bg-fuchsia-500/20 blur-3xl" />
+        <div className="absolute -bottom-48 left-1/3 h-96 w-96 rounded-full bg-orange-400/15 blur-3xl" />
+        <div className="relative mx-auto max-w-7xl px-6 pb-4 pt-10">
+        <div className="mb-8 ">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-100 text-purple-700 text-xs font-extrabold uppercase tracking-wider mb-3">
               🛍️ Thrift Store Marketplace
             </div>
-            <h1 className="text-4xl sm:text-5xl font-black text-slate-900 tracking-tight">
+            <h1 className="text-4xl font-black leading-[1.02] tracking-tight sm:text-6xl">
               Explore All Products
             </h1>
             <p className="text-slate-500 mt-2 text-base max-w-2xl">
               Discover unique handpicked items, vintage fashion, handcrafted jewelry, and home decor from top sellers.
             </p>
           </div>
+        </div>
+      </section>
+          {/* Header Banner */}
+          
 
           {/* ─── Integrated 2-Column Layout: Categories (Left) & Search + Grid (Right) ─── */}
-          <div className="flex flex-col lg:flex-row gap-8 items-start">
+          <div className="flex flex-col lg:flex-row gap-8 items-start mt-5">
             
             {/* Left Sidebar: Categories (Aligned starting from top left!) */}
             <CategorySidebar
