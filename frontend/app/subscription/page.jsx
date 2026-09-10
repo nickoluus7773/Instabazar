@@ -96,11 +96,8 @@ export default function SubscriptionPage() {
     <>
       <SectionContainer
         padding="pt-24 pb-16 lg:pt-28 lg:pb-20"
-        className="relative overflow-hidden bg-gradient-to-b from-white via-orange-50/40 to-white"
+        className="relative overflow-hidden border-b border-slate-100 bg-white"
       >
-        <div className="absolute -top-20 left-10 h-72 w-72 rounded-full bg-pink-200/30 blur-3xl" />
-        <div className="absolute bottom-8 right-0 h-80 w-80 rounded-full bg-orange-200/30 blur-3xl" />
-
         <div className="relative mx-auto max-w-5xl text-center">
           <Badge>💎 Pricing</Badge>
 
@@ -155,7 +152,7 @@ export default function SubscriptionPage() {
         </div>
       </SectionContainer>
 
-      <SectionContainer padding="py-24" className="bg-slate-50/80">
+      <SectionContainer padding="py-24" className="bg-white">
         <SectionHeading
           badge="📊 Compare"
           title="Simple plans for every stage of growth"
@@ -175,7 +172,7 @@ export default function SubscriptionPage() {
         <BenefitCards />
       </SectionContainer>
 
-      <SectionContainer padding="py-24" className="bg-slate-50/80">
+      <SectionContainer padding="py-24" className="bg-white">
         <SectionHeading
           badge="❓ FAQ"
           title="Questions vendors ask before upgrading"
@@ -185,7 +182,7 @@ export default function SubscriptionPage() {
         <FaqAccordion items={faqItems} />
       </SectionContainer>
 
-      <SectionContainer padding="py-16" className="bg-slate-50">
+      <SectionContainer padding="py-16" className="bg-white">
         <div className="mx-auto flex max-w-5xl flex-col gap-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">Ready to grow</p>
