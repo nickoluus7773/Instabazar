@@ -31,7 +31,7 @@ const timeline = [
 
 export default function OurStory() {
   return (
-    <SectionContainer padding="py-24" className="border-t border-slate-100 bg-gradient-to-b from-white via-slate-50/70 to-white">
+    <SectionContainer padding="py-24" className="border-t border-slate-100 bg-white">
       <SectionHeading
         badge="📖 Our Story"
         title="Built Around Real"

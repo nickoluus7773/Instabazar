@@ -23,7 +23,7 @@ const reasons = [
 
 export default function WhyChooseUs() {
   return (
-    <SectionContainer padding="py-24" className="bg-slate-50/70">
+    <SectionContainer padding="py-24" className="bg-white">
       <div className="grid gap-12 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
         <SectionHeading
           badge="✨ Why Choose InstaBazaar"

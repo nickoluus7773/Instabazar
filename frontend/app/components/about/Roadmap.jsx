@@ -11,7 +11,7 @@ const roadmap = [
 
 export default function Roadmap() {
   return (
-    <SectionContainer padding="py-24" className="bg-slate-50/70">
+    <SectionContainer padding="py-24" className="bg-white">
       <SectionHeading
         badge="🗺️ Roadmap"
         title="From a focused start"

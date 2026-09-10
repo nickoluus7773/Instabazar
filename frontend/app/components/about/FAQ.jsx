@@ -36,7 +36,7 @@ const faqs = [
 
 export default function FAQ() {
   return (
-    <SectionContainer padding="py-24" className="bg-slate-50/70">
+    <SectionContainer padding="py-24" className="bg-white">
       <SectionHeading
         badge="❓ FAQ"
         title="Questions vendors ask most often about"

@@ -13,10 +13,12 @@ import {
   WhyChooseUs,
   CoreValues,
 } from "../components/about";
+import Navbar from "../components/layout/Navbar";
 
 export default function AboutPage() {
   return (
     <>
+    <Navbar/>
       <AboutHero />
       <OurStory />
       <MissionVision />
