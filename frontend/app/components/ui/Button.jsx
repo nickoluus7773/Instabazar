@@ -1,7 +1,10 @@
+import Link from "next/link";
+
 export default function Button({
   children,
   variant = "primary",
   type = "button",
+  href,
   className = "",
 }) {
 
@@ -21,11 +24,7 @@ export default function Button({
 
   };
 
-  return (
-
-    <button
-      type={type}
-      className={`
+  const classNames = `
         inline-flex
         items-center
         justify-center
@@ -37,13 +36,22 @@ export default function Button({
         duration-300
         ${styles[variant]}
         ${className}
-      `}
+      `;
+
+  if (href) {
+    return (
+      <Link href={href} className={classNames}>
+        {children}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      type={type}
+      className={classNames}
     >
-
       {children}
-
     </button>
-
   );
-
 }
