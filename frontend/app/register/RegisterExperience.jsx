@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, AtSign, BriefcaseBusiness, Check, ShoppingBag, Sparkles } from "lucide-react";
 import API_BASE_URL from "@/lib/api";
+import Navbar from "../components/layout/Navbar";
 
 const userFields = [
   { name: "username", label: "Username", type: "text", placeholder: "Choose a username", required: true },
@@ -160,17 +161,20 @@ export default function RegisterExperience({ initialMode = "user" }) {
   const updateForm = isVendor ? updateVendor : updateUser;
 
   return (
-    <main className="min-h-screen bg-[#f6f4f1] px-4 py-6 text-slate-900 sm:px-8 sm:py-10">
+    <>
+    <Navbar/>
+    <main className="bg-[#081225] text-slate-900 ">
       <div className="mx-auto flex min-h-[calc(100vh-3rem)] max-w-6xl items-center">
-        <div className="grid w-full overflow-hidden rounded-[2rem] border border-white/70 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.12)] lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="grid w-full overflow-hidden rounded-[2rem] border border-[#F5AE30]/30 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.12)] lg:grid-cols-[0.9fr_1.1fr]">
           <section className="relative hidden overflow-hidden bg-slate-950 p-10 text-white lg:flex lg:flex-col lg:justify-between">
             <div className="absolute -right-24 -top-24 h-72 w-72 rounded-full bg-fuchsia-500/30 blur-3xl" />
             <div className="absolute -bottom-28 -left-20 h-80 w-80 rounded-full bg-orange-400/20 blur-3xl" />
             <div className="relative">
-              <Link href="/" className="inline-flex items-center gap-3 text-xl font-black tracking-tight">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400 text-sm shadow-lg">IB</span>
-                Insta<span className="text-fuchsia-300">Bazaar</span>
-              </Link>
+              
+              <Link href="/" className="text-3xl font-bold">
+          <span className="text-white">Insta</span>
+          <span className="text-[#F5AE30]">Bazaar</span>
+        </Link>
               <div className="mt-24 max-w-sm">
                 <p className="mb-5 flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.22em] text-fuchsia-200"><Sparkles size={16} /> One account, two ways to belong</p>
                 <h1 className="text-5xl font-black leading-[0.98] tracking-tight">Find your place in the bazaar.</h1>
@@ -230,5 +234,6 @@ export default function RegisterExperience({ initialMode = "user" }) {
         </div>
       </div>
     </main>
+    </>
   );
 }
