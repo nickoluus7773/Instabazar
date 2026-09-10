@@ -25,7 +25,11 @@ class Product(models.Model):
         decimal_places=2
     )
 
-    productImage = models.TextField()
+    productImage = models.ImageField(
+        upload_to="products/",
+        max_length=500,
+        blank=True,
+    )
 
     productStock = models.IntegerField(default=0)
 

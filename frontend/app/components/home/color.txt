@@ -1,3 +1,8 @@
 orange=#F5AE30
 black=#0F0D12
 navy blue=#081225
+
+<Link href="/" className="inline-flex items-center gap-3 text-xl font-black tracking-tight">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-fuchsia-500 via-pink-500 to-orange-400 text-sm shadow-lg">IB</span>
+                Insta<span className="text-fuchsia-300">Bazaar</span>
+              </Link>

@@ -113,6 +113,7 @@ def register_vendor(request):
     location = request.data.get("location", "")
     bio = request.data.get("bio", "")
     logo_url = request.data.get("logo_url", "")
+    profile_image = request.FILES.get("profile_image")
     follower_count = request.data.get("follower_count", 0)
     subscription_plan = request.data.get("subscription_plan", "free")
 
@@ -173,6 +174,7 @@ def register_vendor(request):
         location=location or None,
         bio=bio or None,
         logo_url=logo_url or None,
+        profile_image=profile_image,
         follower_count=int(follower_count or 0),
         subscription_plan=subscription_plan if subscription_plan in ["free", "paid"] else "free",
         store_slug=store_slug,

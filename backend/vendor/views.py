@@ -135,6 +135,7 @@ class VendorViewSet(viewsets.ModelViewSet):
             condition = request.data.get("condition") or request.data.get("productCondition") or "New"
             size = request.data.get("size") or request.data.get("productSize") or "Standard"
             image_url = request.data.get("image_url") or request.data.get("productImage") or "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600"
+            image_file = request.FILES.get("productImage") or request.FILES.get("image")
 
             category_obj, _ = Category.objects.get_or_create(categoryName=category_name)
 
@@ -147,7 +148,7 @@ class VendorViewSet(viewsets.ModelViewSet):
                 category=category_obj,
                 productCondition=condition,
                 productSize=size,
-                productImage=image_url,
+                productImage=image_file or image_url,
             )
 
             serializer = ProductSerializer(product)

@@ -85,6 +85,12 @@ class Vendor(models.Model):
         null=True,
     )
 
+    profile_image = models.ImageField(
+        upload_to="vendor_profiles/",
+        blank=True,
+        null=True,
+    )
+
     # Audit
 
     created_at = models.DateTimeField(

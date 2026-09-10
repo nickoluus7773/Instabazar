@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "../../../components/layout/Navbar";
+import Footer from "../../../components/home/Footer";
+import { getAllProducts, getVendorStoreData } from "../../../data/vendorStoreData";
 
 // Helper function to safely extract string name from category (string or object)
 function getCategoryName(category) {
@@ -90,20 +92,28 @@ const FALLBACK_PRODUCTS = [
   },
 ];
 
+const STORE_PRODUCTS = getAllProducts();
+
 export default function ProductDetailPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
+  const vendorSlug = searchParams.get("vendor");
+  const vendorProducts = vendorSlug ? getVendorStoreData(vendorSlug)?.products || [] : [];
   
   // Find matching initial fallback item if exists, otherwise null to wait for live API
   const initialProduct =
-    FALLBACK_PRODUCTS.find((p) => String(p.id) === String(params.id)) || null;
+    vendorProducts.find((p) => String(p.id) === String(params.id)) ||
+    FALLBACK_PRODUCTS.find((p) => String(p.id) === String(params.id)) ||
+    STORE_PRODUCTS.find((p) => String(p.id) === String(params.id)) ||
+    null;
 
   const [product, setProduct] = useState(initialProduct);
   const [loading, setLoading] = useState(!initialProduct);
   const [favorite, setFavorite] = useState(false);
 
   useEffect(() => {
-    fetchLiveProduct();
-  }, [params.id]);
+    if (!vendorSlug) fetchLiveProduct();
+  }, [params.id, vendorSlug]);
 
   useEffect(() => {
     if (product) {
@@ -172,6 +182,7 @@ export default function ProductDetailPage() {
           <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
           <p className="text-gray-500 font-medium">Loading product details...</p>
         </div>
+        <Footer />
       </>
     );
   }
@@ -297,6 +308,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </main>
+      <Footer />
     </>
   );
 }

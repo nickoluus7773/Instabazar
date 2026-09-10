@@ -5,6 +5,15 @@ from products.models import Product
 
 class VendorSerializer(serializers.ModelSerializer):
     product_count = serializers.IntegerField(read_only=True)
+    logo_url = serializers.SerializerMethodField()
+    profile_image = serializers.ImageField(required=False, allow_null=True, write_only=True)
+
+    def get_logo_url(self, obj):
+        if obj.profile_image:
+            request = self.context.get("request")
+            image_url = obj.profile_image.url
+            return request.build_absolute_uri(image_url) if request else image_url
+        return obj.logo_url
 
     class Meta:
         model = Vendor
@@ -17,19 +26,20 @@ class VendorSerializer(serializers.ModelSerializer):
             'follower_count',
             'verification_status',
             'logo_url',
+            'profile_image',
             'subscription_plan',
             'product_count',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'verification_status']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'verification_status', 'logo_url']
 
 
 class VendorProductSerializer(serializers.ModelSerializer):
     productTitle = serializers.CharField()
     productDescription = serializers.CharField()
     productPrice = serializers.DecimalField(max_digits=10, decimal_places=2)
-    productImage = serializers.CharField(allow_blank=True)
+    productImage = serializers.ImageField(required=False, allow_null=True)
     category = serializers.StringRelatedField()
     productStock = serializers.IntegerField()
     productCondition = serializers.CharField(allow_blank=True)
@@ -61,6 +71,15 @@ class VendorProductSerializer(serializers.ModelSerializer):
 class VendorDetailSerializer(serializers.ModelSerializer):
     product_count = serializers.IntegerField(read_only=True)
     products = VendorProductSerializer(many=True, read_only=True)
+    logo_url = serializers.SerializerMethodField()
+    profile_image = serializers.ImageField(required=False, allow_null=True, write_only=True)
+
+    def get_logo_url(self, obj):
+        if obj.profile_image:
+            request = self.context.get("request")
+            image_url = obj.profile_image.url
+            return request.build_absolute_uri(image_url) if request else image_url
+        return obj.logo_url
 
     class Meta:
         model = Vendor
@@ -74,10 +93,11 @@ class VendorDetailSerializer(serializers.ModelSerializer):
             'follower_count',
             'verification_status',
             'logo_url',
+            'profile_image',
             'subscription_plan',
             'product_count',
             'products',
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'verification_status', 'store_slug']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'verification_status', 'store_slug', 'logo_url']
