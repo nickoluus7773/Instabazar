@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "../../../components/layout/Navbar";
 import Footer from "../../../components/home/Footer";
-import { getAllProducts, getVendorStoreData } from "../../../data/vendorStoreData";
 
 // Helper function to safely extract string name from category (string or object)
 function getCategoryName(category) {
@@ -92,28 +91,21 @@ const FALLBACK_PRODUCTS = [
   },
 ];
 
-const STORE_PRODUCTS = getAllProducts();
-
 export default function ProductDetailPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
-  const vendorSlug = searchParams.get("vendor");
-  const vendorProducts = vendorSlug ? getVendorStoreData(vendorSlug)?.products || [] : [];
   
   // Find matching initial fallback item if exists, otherwise null to wait for live API
   const initialProduct =
-    vendorProducts.find((p) => String(p.id) === String(params.id)) ||
-    FALLBACK_PRODUCTS.find((p) => String(p.id) === String(params.id)) ||
-    STORE_PRODUCTS.find((p) => String(p.id) === String(params.id)) ||
-    null;
+    FALLBACK_PRODUCTS.find((p) => String(p.id) === String(params.id)) || null;
 
   const [product, setProduct] = useState(initialProduct);
   const [loading, setLoading] = useState(!initialProduct);
   const [favorite, setFavorite] = useState(false);
+  const [activeImage, setActiveImage] = useState("");
 
   useEffect(() => {
-    if (!vendorSlug) fetchLiveProduct();
-  }, [params.id, vendorSlug]);
+    fetchLiveProduct();
+  }, [params.id]);
 
   useEffect(() => {
     if (product) {
@@ -182,7 +174,6 @@ export default function ProductDetailPage() {
           <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
           <p className="text-gray-500 font-medium">Loading product details...</p>
         </div>
-        <Footer />
       </>
     );
   }
@@ -197,7 +188,7 @@ export default function ProductDetailPage() {
             href="/gallery"
             className="px-6 py-3 bg-purple-600 text-white rounded-xl font-semibold hover:bg-purple-700 transition"
           >
-            ← Back to Gallery
+            ΓåÉ Back to Gallery
           </Link>
         </div>
       </>
@@ -205,107 +196,153 @@ export default function ProductDetailPage() {
   }
 
   const categoryName = getCategoryName(product.category);
+  const productImages = [
+    product.productImage,
+    ...(Array.isArray(product.productImages) ? product.productImages : []),
+    ...(Array.isArray(product.images) ? product.images : []),
+  ].filter((image, index, images) =>
+    typeof image === "string" && image.trim() && images.indexOf(image) === index
+  );
+  const mainImage = productImages.includes(activeImage)
+    ? activeImage
+    : productImages[0];
+  const stockCount = Number(product.productStock ?? 0);
+  const isAvailable = stockCount > 0;
+  const savingsAmount = Number(product.savingsAmount ?? product.savings_amount ?? 250);
+  const productTags = [categoryName, product.productCondition, product.productSize]
+    .filter(Boolean)
+    .map((tag) => `#${String(tag).toLowerCase().replace(/\s+/g, "")}`);
 
   return (
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-gray-100 py-10 px-6">
-        <div className="max-w-6xl mx-auto">
+      <main className="min-h-screen bg-slate-50 px-4 py-8 sm:px-6 sm:py-12">
+        <div className="mx-auto max-w-7xl">
           <Link
             href="/gallery"
-            className="text-purple-600 font-semibold hover:underline"
+            className="inline-flex items-center gap-2 text-sm font-bold text-slate-600 transition hover:text-purple-700"
           >
-            ← Back to Gallery
+            <span className="text-lg">ΓåÉ</span> Back to Gallery
           </Link>
 
-          <div className="bg-white rounded-3xl shadow-lg mt-6 overflow-hidden grid md:grid-cols-2">
+          <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1.08fr)_minmax(360px,0.92fr)] lg:gap-12 xl:gap-16">
             {/* IMAGE */}
-            <div>
+            <section className="min-w-0">
+              <div className="relative overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-sm">
+                <span className="absolute left-5 top-5 z-10 rounded-full bg-slate-900/80 px-3.5 py-1.5 text-xs font-bold text-white backdrop-blur">{categoryName}</span>
+                <span className="absolute right-5 top-5 z-10 rounded-full bg-white/90 px-3.5 py-1.5 text-xs font-bold text-purple-700 shadow-sm backdrop-blur">{product.productCondition || "New"}</span>
+                <div className="aspect-square bg-slate-100 sm:aspect-[1.06]">
               <img
-                src={product.productImage}
+                src={mainImage}
                 alt={product.productTitle}
-                className="w-full h-full object-cover min-h-[350px]"
+                  className="h-full w-full object-cover"
                 onError={(e) => {
                   e.currentTarget.src =
                     "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600";
                 }}
               />
-            </div>
+                </div>
+              </div>
+              {productImages.length > 1 && (
+                <>
+                  <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+                    {productImages.map((image, index) => (
+                      <button key={image} type="button" onClick={() => setActiveImage(image)} className={`h-20 w-20 shrink-0 overflow-hidden rounded-2xl border-2 bg-white p-1 transition sm:h-24 sm:w-24 ${mainImage === image ? "border-purple-600 shadow-md shadow-purple-100" : "border-transparent hover:border-purple-200"}`} aria-label={`View product image ${index + 1}`}>
+                        <img src={image} alt="" className="h-full w-full rounded-xl object-cover" />
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-3 text-xs font-medium text-slate-400">Select an image to view more product details.</p>
+                </>
+              )}
+            </section>
 
             {/* DETAILS */}
-            <div className="p-8 flex flex-col">
-              <span className="inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full w-fit text-sm mb-4 font-medium">
-                {categoryName}
-              </span>
+            <section className="rounded-[2rem] border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:self-start">
 
-              <div className="flex justify-between items-start">
-                <h1 className="text-4xl font-bold text-gray-900">
-                  {product.productTitle}
-                </h1>
+              <div className="flex items-start justify-between gap-5">
+                <div>
+                  <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-purple-600">Curated find</p>
+                  <h1 className="mt-2 text-3xl font-black leading-tight text-slate-900 sm:text-4xl">{product.productTitle}</h1>
+                </div>
 
                 <button
                   type="button"
                   onClick={toggleFavorite}
-                  className="text-3xl transition hover:scale-110 ml-4 shrink-0 cursor-pointer"
+                  className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-white text-2xl shadow-sm transition hover:scale-105 hover:border-pink-200"
+                  aria-label={favorite ? "Remove from wishlist" : "Add to wishlist"}
                 >
-                  {favorite ? "❤️" : "🤍"}
+                  {favorite ? "Γ¥ñ∩╕Å" : "≡ƒñì"}
                 </button>
               </div>
 
-              <p className="text-3xl font-bold text-purple-600 mt-5">
-                ₹{product.productPrice}
+              <p className="mt-5 text-4xl font-black text-purple-700">
+                Γé╣{product.productPrice}
               </p>
-
-              <div className="mt-6 space-y-3 text-gray-800">
-                <p>
-                  <span className="font-semibold">Condition:</span>{" "}
-                  {product.productCondition || "New"}
-                </p>
-
-                <p>
-                  <span className="font-semibold">Size:</span>{" "}
-                  {product.productSize || "N/A"}
-                </p>
-
-                <p>
-                  <span className="font-semibold">Stock:</span>{" "}
-                  {product.productStock}
-                </p>
-
-                {product.vendor && (
-                  <p>
-                    <span className="font-semibold">Vendor:</span>{" "}
-                    {typeof product.vendor === "object"
-                      ? product.vendor?.business_name || product.vendor?.name
-                      : product.vendor}
-                  </p>
-                )}
+              <div className="mt-4 flex flex-wrap gap-2">
+                <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold ${isAvailable ? "bg-emerald-50 text-emerald-700" : "bg-rose-50 text-rose-600"}`}>
+                  <span className={`h-2 w-2 rounded-full ${isAvailable ? "bg-emerald-500" : "bg-rose-500"}`} />
+                  {isAvailable ? "In stock" : "Out of stock"}
+                </span>
+                {isAvailable && <span className="rounded-full bg-orange-50 px-3 py-1.5 text-xs font-bold text-orange-700">Only {stockCount} left</span>}
+                {Number.isFinite(savingsAmount) && savingsAmount > 0 && <span className="rounded-full bg-pink-50 px-3 py-1.5 text-xs font-bold text-pink-700">Save Γé╣{savingsAmount}</span>}
+                <span className="rounded-full bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-700">Direct from vendor</span>
               </div>
 
-              <div className="mt-8">
-                <h2 className="font-bold text-xl mb-2 text-gray-900">
-                  Description:
-                </h2>
-
-                <p className="text-gray-600 leading-7">
-                  {product.productDescription}
-                </p>
+              <div className="mt-7 grid grid-cols-2 gap-3 border-y border-slate-100 py-5 text-sm">
+                <div className="rounded-2xl bg-slate-50 px-4 py-3"><p className="text-xs font-bold uppercase tracking-wide text-slate-400">Condition</p><p className="mt-1 font-bold text-slate-800">{product.productCondition || "New"}</p></div>
+                <div className="rounded-2xl bg-slate-50 px-4 py-3"><p className="text-xs font-bold uppercase tracking-wide text-slate-400">Size</p><p className="mt-1 font-bold text-slate-800">{product.productSize || "Not specified"}</p></div>
               </div>
+
+              <div className="mt-7">
+                <h2 className="text-lg font-black text-slate-900">About this product</h2>
+                <p className="mt-2 text-sm leading-7 text-slate-600 sm:text-base">{product.productDescription || "Ask the vendor for more details about this find."}</p>
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {productTags.map((tag) => <span key={tag} className="rounded-full bg-slate-100 px-3 py-1.5 text-xs font-bold text-slate-500">{tag}</span>)}
+                </div>
+              </div>
+
+              {product.vendor && (
+                <div className="mt-6 flex items-center gap-3 rounded-2xl border border-slate-100 bg-slate-50 p-4">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-pink-500 text-sm font-black text-white">{String(typeof product.vendor === "object" ? product.vendor?.business_name || product.vendor?.name || "V" : product.vendor).charAt(0).toUpperCase()}</div>
+                  <div><p className="text-xs font-bold uppercase tracking-wide text-slate-400">Listed by</p><p className="font-bold text-slate-800">{typeof product.vendor === "object" ? product.vendor?.business_name || product.vendor?.name : product.vendor}</p></div>
+                </div>
+              )}
 
               <a
                 href="https://www.instagram.com/instabazaar.official/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-10 w-full text-center bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 text-white rounded-2xl py-4 font-bold text-lg hover:scale-[1.02] transition duration-200 shadow-lg cursor-pointer flex items-center justify-center gap-2.5"
+                className="mt-8 flex w-full cursor-pointer items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-purple-600 via-pink-500 to-orange-500 py-4 text-center text-base font-bold text-white shadow-lg transition duration-200 hover:scale-[1.02]"
               >
                 <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
                   <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
                 </svg>
                 <span>DM on Instagram</span>
               </a>
-            </div>
+              <p className="mt-3 text-center text-xs leading-5 text-slate-400">You will continue your purchase directly with the vendor on Instagram.</p>
+            </section>
           </div>
+
+          <section className="mt-10 grid gap-5 md:grid-cols-3">
+            <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-100 text-xl">Γ£ª</div>
+              <h2 className="mt-5 text-lg font-black text-slate-900">Why it stands out</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">A one-of-a-kind discovery selected from an independent vendor catalogΓÇönot a mass-market listing.</p>
+            </article>
+            <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-xl">Γ£ô</div>
+              <h2 className="mt-5 text-lg font-black text-slate-900">Before you message</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Confirm availability, sizing, condition, delivery and final price directly with the vendor before purchasing.</p>
+            </article>
+            <article className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-100 text-xl">ΓÖí</div>
+              <h2 className="mt-5 text-lg font-black text-slate-900">Love this find?</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">Save it to your wishlist, then return when you are ready to connect with the seller.</p>
+              <button type="button" onClick={toggleFavorite} className="mt-4 text-sm font-bold text-purple-700 hover:text-purple-900">{favorite ? "Saved to wishlist" : "Save for later"} ΓåÆ</button>
+            </article>
+          </section>
         </div>
       </main>
       <Footer />
