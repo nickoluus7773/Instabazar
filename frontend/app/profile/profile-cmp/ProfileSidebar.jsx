@@ -34,16 +34,15 @@ export default function ProfileSidebar({ user, activeTab, setActiveTab }) {
 
   return (
     <div className="sticky top-8">
-      <div className="bg-white rounded-3xl shadow-lg overflow-hidden">
+      <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
         {/* Cover */}
-
-        <div className="h-28 bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400" />
+        <div className="h-28 bg-gradient-to-r from-[#17113A] via-[#4F46E5] to-[#7C3AED]" />
 
         {/* Profile */}
 
         <div className="px-6 pb-6">
           <div className="flex justify-center -mt-14">
-            <div className="w-32 h-32 rounded-full border-4 border-white bg-gradient-to-br from-purple-600 to-pink-500 shadow-xl flex items-center justify-center">
+            <div className="w-32 h-32 rounded-full border-4 border-white bg-gradient-to-br from-[#4F46E5] to-[#EC4899] shadow-xl flex items-center justify-center">
               <span className="text-5xl font-bold text-white">
                 {user?.username?.charAt(0).toUpperCase() || "U"}
               </span>
@@ -51,9 +50,9 @@ export default function ProfileSidebar({ user, activeTab, setActiveTab }) {
           </div>
 
           <div className="text-center mt-4">
-            <h2 className="text-xl font-bold text-gray-800">{user.name}</h2>
+          <h2 className="text-xl font-bold text-[#0F172A]"></h2>
 
-            <p className="text-gray-500 text-sm">{user.username}</p>
+          <p className="text-[#64748B] text-sm">{user.username}</p>
           </div>
 
 
@@ -70,8 +69,8 @@ export default function ProfileSidebar({ user, activeTab, setActiveTab }) {
                   onClick={() => setActiveTab(item.id)}
                   className={`w-full flex items-center gap-4 px-4 py-3 rounded-xl transition-all duration-300 ${
                     activeTab === item.id
-                      ? "bg-gradient-to-r from-purple-600 via-pink-500 to-orange-400 text-white shadow-lg"
-                      : "hover:bg-gray-100 text-gray-700"
+  ? "bg-gradient-to-r from-[#4F46E5] to-[#7C3AED] text-white shadow-lg"
+  : "hover:bg-[#F8FAFC] text-[#475569]"
                   }`}
                 >
                   <Icon size={20} />
@@ -85,7 +84,7 @@ export default function ProfileSidebar({ user, activeTab, setActiveTab }) {
           {/* Logout */}
 
           <button
-            className="w-full mt-8 flex justify-center items-center gap-3 bg-red-500 hover:bg-red-600 transition-all text-white rounded-xl py-3 font-semibold"
+          className="w-full mt-8 flex justify-center items-center gap-3 bg-[#EF4444] hover:bg-[#DC2626] transition-all text-white rounded-xl py-3 font-semibold shadow-sm"
             onClick={logout}
           >
             <LogOut size={18} />

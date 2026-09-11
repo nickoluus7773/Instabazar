@@ -226,9 +226,19 @@ export default function EditProduct() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Product image URL</label>
-              <input type="url" name="image_url" value={formData.image_url} onChange={handleChange} className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="https://..." />
-            </div>
+  <label className="block text-sm font-medium text-gray-700 mb-2">
+    Product image URL
+  </label>
+
+  <input
+    type="text"
+    name="image_url"
+    value={formData.image_url}
+    onChange={handleChange}
+    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+    placeholder="https://... or /media/products/..."
+  />
+</div>
 
             <div className="flex gap-4 pt-4">
               <button

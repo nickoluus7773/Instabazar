@@ -293,27 +293,13 @@ export default function VendorDashboard() {
       {/* Sidebar - Desktop */}
       <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-200 p-6 sticky top-0 h-screen overflow-y-auto">
         {/* Brand Logo & Subtitle */}
-        <div className="mb-8">
-          <Link href="/" className="flex items-center gap-2 text-2xl font-black">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-pink-500 to-orange-400 flex items-center justify-center text-white text-sm shadow-md">
-              IB
-            </div>
-            <span>
-              <span className="text-slate-900">Insta</span>
-              <span className="text-purple-600">Bazaar</span>
-            </span>
-          </Link>
+        <div className="mb-3">
             <h2 className="text-lg font-bold text-slate-900">Vendor Dashboard</h2>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Centralized hub for Instagram thrift store sellers
-            </p>
           </div>
 
         {/* Sidebar Navigation */}
         <nav className="flex-1 space-y-1.5">
-          <div className="text-[11px] font-bold tracking-wider text-slate-400 uppercase mb-3">
-            Sidebar (All Pages)
-          </div>
+          
           {navItems.map((item) => {
             const isActive = activeNav === item.id;
             return (

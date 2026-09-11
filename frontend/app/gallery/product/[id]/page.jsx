@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import Navbar from "../../../components/layout/Navbar";
 import Footer from "../../../components/home/Footer";
 import API_BASE_URL from "@/lib/api";
-import { getAllProducts, getVendorStoreData } from "../../../data/vendorStoreData";
 
 // Helper function to safely extract string name from category (string or object)
 function getCategoryName(category) {
@@ -17,122 +16,38 @@ function getCategoryName(category) {
   }
   return String(category).trim();
 }
+function getImageUrl(image) {
+  if (!image) return "";
 
-const FALLBACK_PRODUCTS = [
-  {
-    id: 1,
-    productTitle: "Handmade Cotton Kurta",
-    productDescription: "Beautiful handloom cotton kurta with traditional embroidery. Perfect for casual and festive occasions.",
-    productPrice: "1299.00",
-    productImage: "https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=600",
-    productStock: 15,
-    productSize: "M",
-    productCondition: "New",
-    category: "Clothing",
-    vendor: "KnotCraft Studio",
-    instagram_handle: "knotcraft.official",
-    followers: "14.2k",
-  },
-  {
-    id: 2,
-    productTitle: "Silver Oxidized Jhumkas",
-    productDescription: "Stunning oxidized silver jhumka earrings. Lightweight and comfortable for everyday wear.",
-    productPrice: "499.00",
-    productImage: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600",
-    productStock: 30,
-    productSize: "Free Size",
-    productCondition: "New",
-    category: "Accessories",
-    vendor: "Aura Jewels",
-    instagram_handle: "aurajewels.in",
-    followers: "8.9k",
-  },
-  {
-    id: 3,
-    productTitle: "Macrame Wall Hanging",
-    productDescription: "A beautiful handwoven macramé wall hanging made with 100% cotton rope. Perfect for adding warmth to any room. Each piece is unique and made to order.",
-    productPrice: "649.00",
-    productOriginalPrice: "899.00",
-    productImage: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600",
-    productStock: 8,
-    productSize: "Standard",
-    productCondition: "New",
-    category: "Handmade",
-    vendor: "TheKnotCo",
-    instagram_handle: "theknotco",
-    followers: "14.2k",
-  },
-  {
-    id: 4,
-    productTitle: "Block Print Tote Bag",
-    productDescription: "Eco-friendly cotton tote bag with traditional Rajasthani block print design.",
-    productPrice: "349.00",
-    productImage: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=600",
-    productStock: 25,
-    productSize: "Large",
-    productCondition: "New",
-    category: "Accessories",
-    vendor: "Jaipur Prints",
-    instagram_handle: "jaipurprints.co",
-    followers: "22.5k",
-  },
-  {
-    id: 5,
-    productTitle: "Indigo Dyed Scarf",
-    productDescription: "Natural indigo dyed cotton scarf. Handwoven by artisans from Bagru, Rajasthan.",
-    productPrice: "599.00",
-    productImage: "https://images.unsplash.com/photo-1601924638867-3a6de6b7a500?w=600",
-    productStock: 12,
-    productSize: "One Size",
-    productCondition: "New",
-    category: "Clothing",
-    vendor: "Bagru Indigo",
-    instagram_handle: "bagruindigo",
-    followers: "11.1k",
-  },
-  {
-    id: 6,
-    productTitle: "Ceramic Plant Pot Set",
-    productDescription: "Set of 3 hand-painted ceramic pots. Perfect for indoor plants and succulents.",
-    productPrice: "749.00",
-    productImage: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=600",
-    productStock: 10,
-    productSize: "Medium",
-    productCondition: "New",
-    category: "Home Decor",
-    vendor: "Clay & Co",
-    instagram_handle: "clayandco",
-    followers: "5.4k",
-  },
-];
+  if (
+    (image.startsWith("http://") || image.startsWith("https://")) &&
+    !image.includes("/products/")
+  ) {
+    return image;
+  }
 
-const STORE_PRODUCTS = typeof getAllProducts === "function" ? getAllProducts() : [];
+  if (image.includes("/products/")) {
+    const filename = image.split("/products/").pop();
+    return `/images/${filename}`;
+  }
+
+  return image;
+}
 
 export default function ProductDetailPage() {
   const params = useParams();
-  const searchParams = useSearchParams();
-  const vendorSlug = searchParams?.get("vendor");
-  const vendorProducts = vendorSlug && typeof getVendorStoreData === "function"
-    ? getVendorStoreData(vendorSlug)?.products || []
-    : [];
+  
 
-  const initialProduct =
-    vendorProducts.find((p) => String(p.id) === String(params?.id)) ||
-    FALLBACK_PRODUCTS.find((p) => String(p.id) === String(params?.id)) ||
-    STORE_PRODUCTS.find((p) => String(p.id) === String(params?.id)) ||
-    null;
+  const [product, setProduct] = useState(null);
+const [loading, setLoading] = useState(true);
 
-  const [product, setProduct] = useState(initialProduct);
-  const [loading, setLoading] = useState(!initialProduct);
   const [favorite, setFavorite] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   useEffect(() => {
-    if (!vendorSlug) {
-      fetchLiveProduct();
-    }
-  }, [params?.id, vendorSlug]);
+    fetchLiveProduct();
+  }, [params?.id]);
 
   useEffect(() => {
     if (product) {
@@ -218,13 +133,14 @@ export default function ProductDetailPage() {
 
   const title = product.productTitle || product.title || "Product";
   const categoryName = getCategoryName(product.category);
-  const currentPrice = parseFloat(product.productPrice || product.price || "649");
-  const originalPrice = parseFloat(
-    product.productOriginalPrice ||
-    product.originalPrice ||
-    (currentPrice ? (currentPrice + 250).toFixed(0) : "899")
-  );
-  const savings = Math.max(0, originalPrice - currentPrice);
+  const currentPrice = parseFloat(product.productPrice);
+  const originalPrice = product.productOriginalPrice
+  ? parseFloat(product.productOriginalPrice)
+  : null;
+  const savings =
+  originalPrice && originalPrice > currentPrice
+    ? originalPrice - currentPrice
+    : 0;
 
   // Normalize image list or provide clean fallbacks
   const productImages = [
@@ -233,10 +149,7 @@ export default function ProductDetailPage() {
     ...(Array.isArray(product.images) ? product.images : []),
   ].filter((img, idx, arr) => typeof img === "string" && img.trim() && arr.indexOf(img) === idx);
 
-  const displayImages =
-    productImages.length > 0
-      ? productImages
-      : ["https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600"];
+  const displayImages = productImages;
 
   const mainImageUrl = displayImages[activeImageIndex] || displayImages[0];
 
@@ -279,13 +192,10 @@ export default function ProductDetailPage() {
             {/* Main Image Box with soft curved corners */}
             <div className="w-full aspect-square max-w-[500px] bg-[#F4EFE6]/60 rounded-3xl p-6 sm:p-8 flex items-center justify-center border border-stone-200/70 shadow-sm relative overflow-hidden">
               <img
-                src={mainImageUrl}
-                alt={title}
-                className="w-full h-full object-contain mix-blend-multiply drop-shadow-md transition-all duration-300 hover:scale-105"
-                onError={(e) => {
-                  e.currentTarget.src = "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600";
-                }}
-              />
+  src={getImageUrl(mainImageUrl)}
+  alt={title}
+  className="w-full h-full object-contain mix-blend-multiply drop-shadow-md transition-all duration-300 hover:scale-105"
+/>
             </div>
 
             {/* Thumbnails Row */}
@@ -302,10 +212,10 @@ export default function ProductDetailPage() {
                   }`}
                 >
                   <img
-                    src={img}
-                    alt={`Thumbnail ${idx + 1}`}
-                    className="w-full h-full object-contain mix-blend-multiply"
-                  />
+  src={getImageUrl(img)}
+  alt={`Thumbnail ${idx + 1}`}
+  className="w-full h-full object-contain mix-blend-multiply"
+/>
                 </button>
               ))}
             </div>
@@ -352,8 +262,7 @@ export default function ProductDetailPage() {
 
             {/* Description */}
             <p className="text-sm sm:text-base text-slate-600 leading-relaxed">
-              {product.productDescription ||
-                "A beautiful handcrafted find curated from Instagram creators. Made with premium quality materials, perfect for adding authentic charm to your collection."}
+            {product.productDescription}
             </p>
 
             {/* Tags */}

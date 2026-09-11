@@ -73,8 +73,8 @@ export default function ProfilePage() {
   return (
     <>
       <Navbar />
-      <div className="bg-[#081225] min-h-screen bg-gray-100">
-        <div className=" bg-[#081225] max-w-7xl mx-auto px-5 py-8">
+      <div className="bg-[#081225] min-h-screen">
+      <div className=" bg-[#081225] max-w-7xl mx-auto px-5 py-8">
           <div className="grid lg:grid-cols-4 gap-8">
             {/* Sidebar */}
 

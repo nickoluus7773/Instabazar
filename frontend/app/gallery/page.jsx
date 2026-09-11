@@ -16,97 +16,6 @@ function getCategoryName(category) {
   return String(category).trim();
 }
 
-// Initial fallback catalog matching the database structure
-const FALLBACK_PRODUCTS = [
-  {
-    id: 1,
-    productTitle: "Handmade Cotton Kurta",
-    productDescription: "Beautiful handloom cotton kurta with traditional embroidery. Perfect for casual and festive occasions.",
-    productPrice: "1299.00",
-    productImage: "https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=600",
-    productStock: 15,
-    productSize: "M",
-    productCondition: "New",
-    category: "Clothing",
-  },
-  {
-    id: 2,
-    productTitle: "Silver Oxidized Jhumkas",
-    productDescription: "Stunning oxidized silver jhumka earrings. Lightweight and comfortable for everyday wear.",
-    productPrice: "499.00",
-    productImage: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600",
-    productStock: 30,
-    productSize: "Free Size",
-    productCondition: "New",
-    category: "Accessories",
-  },
-  {
-    id: 3,
-    productTitle: "Macrame Wall Hanging",
-    productDescription: "Hand-knotted macrame wall hanging made with 100% cotton rope. Adds a boho touch to any room.",
-    productPrice: "899.00",
-    productImage: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600",
-    productStock: 8,
-    productSize: "Standard",
-    productCondition: "Like New",
-    category: "Home Decor",
-  },
-  {
-    id: 4,
-    productTitle: "Block Print Tote Bag",
-    productDescription: "Eco-friendly cotton tote bag with traditional Rajasthani block print design.",
-    productPrice: "349.00",
-    productImage: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=600",
-    productStock: 25,
-    productSize: "Large",
-    productCondition: "New",
-    category: "Accessories",
-  },
-  {
-    id: 5,
-    productTitle: "Indigo Dyed Scarf",
-    productDescription: "Natural indigo dyed cotton scarf. Handwoven by artisans from Bagru, Rajasthan.",
-    productPrice: "599.00",
-    productImage: "https://images.unsplash.com/photo-1601924638867-3a6de6b7a500?w=600",
-    productStock: 12,
-    productSize: "One Size",
-    productCondition: "New",
-    category: "Clothing",
-  },
-  {
-    id: 6,
-    productTitle: "Ceramic Plant Pot Set",
-    productDescription: "Set of 3 hand-painted ceramic pots. Perfect for indoor plants and succulents.",
-    productPrice: "749.00",
-    productImage: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=600",
-    productStock: 10,
-    productSize: "Medium",
-    productCondition: "New",
-    category: "Home Decor",
-  },
-  {
-    id: 7,
-    productTitle: "Vintage Denim Jacket",
-    productDescription: "Classic oversized vintage denim jacket with authentic distressed finish.",
-    productPrice: "1899.00",
-    productImage: "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600",
-    productStock: 5,
-    productSize: "L",
-    productCondition: "Vintage",
-    category: "Clothing",
-  },
-  {
-    id: 8,
-    productTitle: "Handcrafted Leather Journal",
-    productDescription: "Genuine leather bound diary with recycled handmade paper sheets.",
-    productPrice: "649.00",
-    productImage: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600",
-    productStock: 18,
-    productSize: "A5",
-    productCondition: "New",
-    category: "Accessories",
-  },
-];
 
 /* ─── Category Sidebar Component ─── */
 function CategorySidebar({ categories, selectedCategory, onSelectCategory }) {
@@ -159,10 +68,34 @@ function CategorySidebar({ categories, selectedCategory, onSelectCategory }) {
     </aside>
   );
 }
+function getImageUrl(image) {
+  if (!image) return "";
 
+  // If it's already an external image URL that is NOT Django media
+  if (
+    (image.startsWith("http://") || image.startsWith("https://")) &&
+    !image.includes("/products/")
+  ) {
+    return image;
+  }
+
+  // Any Django product media path:
+  // /media/products/heroimg1.png
+  // http://127.0.0.1:8000/media/products/heroimg1.png
+  // http://127.0.0.1:8000/media/media/media/products/heroimg1.png
+  if (image.includes("/products/")) {
+    const filename = image.split("/products/").pop();
+    return `/images/${filename}`;
+  }
+
+  return image;
+}
 /* ─── Product Card Component ─── */
 function ProductCard({ product }) {
   const categoryName = getCategoryName(product.category);
+  console.log("PRODUCT IMAGE:", product.productImage);
+  console.log("FINAL IMAGE URL:", getImageUrl(product.productImage));
+
 
   return (
     <div className="mb-10 ">
@@ -170,15 +103,12 @@ function ProductCard({ product }) {
       <article className="group bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-2xl hover:border-purple-200 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer flex flex-col h-full relative ">
         {/* Product Image & Badges */}
         <div className="relative h-64 bg-slate-100 overflow-hidden">
-          <img
-            src={product.productImage}
-            alt={product.productTitle}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            onError={(e) => {
-              e.currentTarget.src =
-                "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600";
-            }}
-          />
+        
+        <img
+  src={getImageUrl(product.productImage)}
+  alt={product.productTitle}
+  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+/>
 
           {/* Category Badge */}
           <span className="absolute top-3.5 left-3.5 bg-slate-900/80 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-sm">
@@ -199,7 +129,7 @@ function ProductCard({ product }) {
             </h2>
 
             <p className="text-slate-500 text-xs mt-1.5 line-clamp-2 leading-relaxed">
-              {product.productDescription || "High quality handcrafted product from Instagram seller."}
+              {product.productDescription }
             </p>
           </div>
 
@@ -224,7 +154,7 @@ function ProductCard({ product }) {
 
 /* ─── Gallery Main Page ─── */
 export default function GalleryPage() {
-  const [products, setProducts] = useState(FALLBACK_PRODUCTS);
+  const [products, setProducts] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [priceRange, setPriceRange] = useState("all");
@@ -494,6 +424,7 @@ export default function GalleryPage() {
 
               {/* Product Grid */}
               {filteredProducts.length === 0 ? (
+                <div className="mb-10  mr-5">
                 <div className="text-center py-20 px-6 bg-white rounded-3xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center">
                   <div className="w-16 h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-3xl mb-4">
                     🔍
@@ -508,6 +439,7 @@ export default function GalleryPage() {
                   >
                     Reset All Filters
                   </button>
+                </div>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
