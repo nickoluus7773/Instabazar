@@ -33,6 +33,8 @@ class Product(models.Model):
 
     productStock = models.IntegerField(default=0)
 
+    is_active = models.BooleanField(default=True)
+
     productSize = models.CharField(max_length=20, blank=True)
 
     productCondition = models.CharField(max_length=50)

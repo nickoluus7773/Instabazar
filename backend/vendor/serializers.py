@@ -62,7 +62,7 @@ class VendorProductSerializer(serializers.ModelSerializer):
         ]
 
     def get_is_active(self, obj):
-        return True
+        return obj.is_active
 
     def get_views_count(self, obj):
         return 0

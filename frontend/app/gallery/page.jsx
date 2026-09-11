@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import Navbar from "../components/layout/Navbar";
+import Footer from "../components/home/Footer";
+import API_BASE_URL from "@/lib/api";
 
 // Helper function to safely extract string name from category (string or object)
 function getCategoryName(category) {
@@ -46,7 +48,7 @@ const FALLBACK_PRODUCTS = [
     productImage: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600",
     productStock: 8,
     productSize: "Standard",
-    productCondition: "New",
+    productCondition: "Like New",
     category: "Home Decor",
   },
   {
@@ -82,43 +84,73 @@ const FALLBACK_PRODUCTS = [
     productCondition: "New",
     category: "Home Decor",
   },
+  {
+    id: 7,
+    productTitle: "Vintage Denim Jacket",
+    productDescription: "Classic oversized vintage denim jacket with authentic distressed finish.",
+    productPrice: "1899.00",
+    productImage: "https://images.unsplash.com/photo-1576995853123-5a10305d93c0?w=600",
+    productStock: 5,
+    productSize: "L",
+    productCondition: "Vintage",
+    category: "Clothing",
+  },
+  {
+    id: 8,
+    productTitle: "Handcrafted Leather Journal",
+    productDescription: "Genuine leather bound diary with recycled handmade paper sheets.",
+    productPrice: "649.00",
+    productImage: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?w=600",
+    productStock: 18,
+    productSize: "A5",
+    productCondition: "New",
+    category: "Accessories",
+  },
 ];
 
 /* ─── Category Sidebar Component ─── */
 function CategorySidebar({ categories, selectedCategory, onSelectCategory }) {
   return (
-    <aside className="w-full lg:w-60 shrink-0">
-      <div className="bg-white rounded-2xl shadow-sm border p-5 sticky top-24">
-        <h2 className="text-lg font-bold text-gray-900 mb-4">Categories</h2>
+    <aside className="w-full lg:w-64 shrink-0">
+      <div className="bg-white rounded-3xl shadow-sm border border-slate-200/80 p-5 sticky top-24">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+          <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <span>🏷️</span> Categories
+          </h2>
+          <span className="text-xs font-semibold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-full">
+            {categories.length + 1}
+          </span>
+        </div>
 
-        <div className="space-y-1">
+        <div className="space-y-1.5">
           <button
             type="button"
             onClick={() => onSelectCategory("All")}
-            className={`w-full text-left px-4 py-3 rounded-xl transition cursor-pointer font-medium text-sm flex items-center justify-between ${
+            className={`w-full text-left px-4 py-3 rounded-2xl transition cursor-pointer font-semibold text-sm flex items-center justify-between ${
               selectedCategory.toLowerCase() === "all"
-                ? "bg-purple-600 text-white shadow-sm font-semibold"
-                : "text-gray-700 hover:bg-gray-100"
+                ? "bg-purple-600 text-white shadow-md shadow-purple-200 font-bold"
+                : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             }`}
           >
             <span>All Products</span>
+            {selectedCategory.toLowerCase() === "all" && <span>✓</span>}
           </button>
 
           {categories.map((cat) => {
-            const isSelected =
-              selectedCategory.toLowerCase() === cat.toLowerCase();
+            const isSelected = selectedCategory.toLowerCase() === cat.toLowerCase();
             return (
               <button
                 key={cat}
                 type="button"
                 onClick={() => onSelectCategory(cat)}
-                className={`w-full text-left px-4 py-3 rounded-xl transition cursor-pointer font-medium text-sm flex items-center justify-between ${
+                className={`w-full text-left px-4 py-3 rounded-2xl transition cursor-pointer font-semibold text-sm flex items-center justify-between ${
                   isSelected
-                    ? "bg-purple-600 text-white shadow-sm font-semibold"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? "bg-purple-600 text-white shadow-md shadow-purple-200 font-bold"
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 }`}
               >
                 <span>{cat}</span>
+                {isSelected && <span>✓</span>}
               </button>
             );
           })}
@@ -133,47 +165,60 @@ function ProductCard({ product }) {
   const categoryName = getCategoryName(product.category);
 
   return (
+    <div className="mb-10 ">
     <Link href={`/gallery/product/${product.id}`}>
-      <article className="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-xl transition duration-300 hover:-translate-y-1 cursor-pointer flex flex-col h-full">
-        <div className="relative">
+      <article className="group bg-white rounded-3xl overflow-hidden border border-slate-200/80 shadow-sm hover:shadow-2xl hover:border-purple-200 transition-all duration-300 hover:-translate-y-1.5 cursor-pointer flex flex-col h-full relative ">
+        {/* Product Image & Badges */}
+        <div className="relative h-64 bg-slate-100 overflow-hidden">
           <img
             src={product.productImage}
             alt={product.productTitle}
-            className="w-full h-64 object-cover"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             onError={(e) => {
               e.currentTarget.src =
                 "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600";
             }}
           />
 
-          <span className="absolute top-3 left-3 bg-purple-600 text-white text-xs px-3 py-1 rounded-lg font-semibold shadow">
+          {/* Category Badge */}
+          <span className="absolute top-3.5 left-3.5 bg-slate-900/80 backdrop-blur-md text-white text-xs px-3 py-1.5 rounded-full font-bold shadow-sm">
             {categoryName}
+          </span>
+
+          {/* Condition Tag */}
+          <span className="absolute top-3.5 right-3.5 bg-white/90 backdrop-blur-md text-purple-700 text-[11px] px-3 py-1 rounded-full font-bold shadow-sm border border-purple-100">
+            {product.productCondition || "New"}
           </span>
         </div>
 
-        <div className="p-5 flex flex-col flex-1 justify-between">
+        {/* Product Details */}
+        <div className="p-6 flex flex-col flex-1 justify-between bg-white">
           <div>
-            <h2 className="font-bold text-lg line-clamp-2 text-gray-900 mb-1">
+            <h2 className="font-extrabold text-lg line-clamp-1 text-slate-900 group-hover:text-purple-600 transition-colors">
               {product.productTitle}
             </h2>
 
-            <p className="text-gray-500 text-xs">
-              Condition: {product.productCondition || "New"}
+            <p className="text-slate-500 text-xs mt-1.5 line-clamp-2 leading-relaxed">
+              {product.productDescription || "High quality handcrafted product from Instagram seller."}
             </p>
           </div>
 
-          <div className="flex justify-between items-center mt-6 pt-4 border-t border-gray-100">
-            <span className="text-2xl font-black text-purple-700">
-              ₹{product.productPrice}
-            </span>
+          <div className="flex justify-between items-center mt-6 pt-4 border-t border-slate-100">
+            <div>
+              <span className="text-xs font-bold text-slate-400 block uppercase tracking-wider">Price</span>
+              <span className="text-2xl font-black text-purple-600">
+                ₹{product.productPrice}
+              </span>
+            </div>
 
-            <span className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-xl text-xs font-bold transition shadow-sm">
-              View Product
+            <span className="bg-slate-900 group-hover:bg-purple-600 text-white px-4 py-2.5 rounded-2xl text-xs font-bold transition-all shadow-md group-hover:shadow-purple-200">
+              View Product →
             </span>
           </div>
         </div>
       </article>
     </Link>
+    </div>
   );
 }
 
@@ -181,6 +226,10 @@ function ProductCard({ product }) {
 export default function GalleryPage() {
   const [products, setProducts] = useState(FALLBACK_PRODUCTS);
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [priceRange, setPriceRange] = useState("all");
+  const [selectedCondition, setSelectedCondition] = useState("all");
+  const [sortBy, setSortBy] = useState("default");
   const [isLiveApi, setIsLiveApi] = useState(false);
 
   useEffect(() => {
@@ -188,8 +237,8 @@ export default function GalleryPage() {
   }, []);
 
   async function fetchLiveProducts() {
-    // List candidate URLs: relative Next.js proxy route first, then direct backend URLs
     const urlsToTry = [
+      `${API_BASE_URL}/api/products/`,
       "/api/products/",
       "http://127.0.0.1:8000/api/products/",
       "http://localhost:8000/api/products/",
@@ -207,10 +256,14 @@ export default function GalleryPage() {
         const res = await fetch(url, { cache: "no-store" });
         if (res.ok) {
           const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            setProducts(data);
+          const items = Array.isArray(data) ? data : data?.results;
+          if (Array.isArray(items) && items.length > 0) {
+            setProducts(items);
             setIsLiveApi(true);
-            return; // Successfully loaded live Django products
+            return;
+          } else if (res.ok) {
+            setIsLiveApi(true);
+            return;
           }
         }
       } catch {
@@ -222,69 +275,242 @@ export default function GalleryPage() {
   }
 
   // Extract unique category names safely
-  const categories = Array.from(
-    new Set(
-      products
-        .map((p) => getCategoryName(p.category))
-        .filter(Boolean)
-    )
-  );
+  const categories = useMemo(() => {
+    return Array.from(
+      new Set(
+        products
+          .map((p) => getCategoryName(p.category))
+          .filter(Boolean)
+      )
+    );
+  }, [products]);
 
-  // Filter products based on selected category (case-insensitive)
-  const filteredProducts =
-    selectedCategory.toLowerCase() === "all"
-      ? products
-      : products.filter(
-          (p) =>
-            getCategoryName(p.category).toLowerCase() ===
-            selectedCategory.toLowerCase()
-        );
+  // Extract available conditions
+  const conditions = useMemo(() => {
+    const condSet = new Set(
+      products.map((p) => p.productCondition).filter(Boolean)
+    );
+    if (condSet.size === 0) {
+      return ["New", "Like New", "Used", "Vintage"];
+    }
+    return Array.from(condSet);
+  }, [products]);
+
+  // Combined Search, Filtering, and Sorting logic
+  const filteredProducts = useMemo(() => {
+    let result = [...products];
+
+    // 1. Text Search Filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      result = result.filter((p) => {
+        const title = (p.productTitle || p.title || "").toLowerCase();
+        const desc = (p.productDescription || p.description || "").toLowerCase();
+        const cat = getCategoryName(p.category).toLowerCase();
+        const cond = (p.productCondition || "").toLowerCase();
+        return title.includes(q) || desc.includes(q) || cat.includes(q) || cond.includes(q);
+      });
+    }
+
+    // 2. Category Filter
+    if (selectedCategory.toLowerCase() !== "all") {
+      result = result.filter(
+        (p) => getCategoryName(p.category).toLowerCase() === selectedCategory.toLowerCase()
+      );
+    }
+
+    // 3. Price Filter
+    if (priceRange !== "all") {
+      result = result.filter((p) => {
+        const price = parseFloat(p.productPrice || p.price || 0);
+        if (priceRange === "under500") return price < 500;
+        if (priceRange === "500to1000") return price >= 500 && price <= 1000;
+        if (priceRange === "1000to2000") return price > 1000 && price <= 2000;
+        if (priceRange === "above2000") return price > 2000;
+        return true;
+      });
+    }
+
+    // 4. Condition Filter
+    if (selectedCondition !== "all") {
+      result = result.filter(
+        (p) => (p.productCondition || "New").toLowerCase() === selectedCondition.toLowerCase()
+      );
+    }
+
+    // 5. Sort By
+    if (sortBy === "price-low") {
+      result.sort((a, b) => parseFloat(a.productPrice || 0) - parseFloat(b.productPrice || 0));
+    } else if (sortBy === "price-high") {
+      result.sort((a, b) => parseFloat(b.productPrice || 0) - parseFloat(a.productPrice || 0));
+    } else if (sortBy === "name-az") {
+      result.sort((a, b) => (a.productTitle || "").localeCompare(b.productTitle || ""));
+    }
+
+    return result;
+  }, [products, searchQuery, selectedCategory, priceRange, selectedCondition, sortBy]);
+
+  // Check if any filter is active to show Reset button
+  const hasActiveFilters =
+    searchQuery.trim() !== "" ||
+    selectedCategory !== "All" ||
+    priceRange !== "all" ||
+    selectedCondition !== "all" ||
+    sortBy !== "default";
+
+  const resetAllFilters = () => {
+    setSearchQuery("");
+    setSelectedCategory("All");
+    setPriceRange("all");
+    setSelectedCondition("all");
+    setSortBy("default");
+  };
 
   return (
     <>
       <Navbar />
 
-      <main className="min-h-screen bg-gray-100 py-10">
-        <div className="max-w-7xl mx-auto px-6">
+      <main className="min-h-screen bg-slate-50/70 ">
+        <div className="max-w-7xl ">
 
-          {/* Backend Status Notice */}
-          {!isLiveApi && (
-            <div className="bg-amber-50 border border-amber-300 text-amber-900 px-5 py-3 rounded-2xl mb-8 flex items-center justify-between text-sm shadow-sm">
-              <div className="flex items-center gap-2">
-                <span>⚠️</span>
-                <span>
-                  <strong>Django Backend is not connected.</strong> Showing sample products. Make sure Django is running on port 8000 (`python manage.py runserver 127.0.0.1:8000`)!
-                </span>
-              </div>
-              <button
-                onClick={fetchLiveProducts}
-                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition shadow cursor-pointer"
-              >
-                Connect Backend
-              </button>
+        <section className="relative overflow-hidden bg-slate-950 text-white">
+        <div className="absolute -right-28 -top-36 h-96 w-96 rounded-full bg-fuchsia-500/20 blur-3xl" />
+        <div className="absolute -bottom-48 left-1/3 h-96 w-96 rounded-full bg-orange-400/15 blur-3xl" />
+        <div className="relative mx-auto max-w-7xl px-6 pb-4 pt-10">
+        <div className="mb-8 ">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-100 text-purple-700 text-xs font-extrabold uppercase tracking-wider mb-3">
+              🛍️ Thrift Store Marketplace
             </div>
-          )}
+            <h1 className="text-4xl font-black leading-[1.02] tracking-tight sm:text-6xl">
+              Explore All Products
+            </h1>
+            <p className="text-slate-500 mt-2 text-base max-w-2xl">
+              Discover unique handpicked items, vintage fashion, handcrafted jewelry, and home decor from top sellers.
+            </p>
+          </div>
+        </div>
+      </section>
+          {/* Header Banner */}
+          
 
-          <h1 className="text-5xl font-bold mb-2 text-black">All Products</h1>
-
-          <p className="text-gray-500 mb-8">
-            Showing {filteredProducts.length} {filteredProducts.length === 1 ? "product" : "products"} {selectedCategory !== "All" && `in ${selectedCategory}`}
-          </p>
-
-          <div className="flex flex-col lg:flex-row gap-8">
+          {/* ─── Integrated 2-Column Layout: Categories (Left) & Search + Grid (Right) ─── */}
+          <div className="flex flex-col lg:flex-row gap-8 items-start mt-5">
+            
+            {/* Left Sidebar: Categories (Aligned starting from top left!) */}
             <CategorySidebar
               categories={categories}
               selectedCategory={selectedCategory}
               onSelectCategory={setSelectedCategory}
             />
 
-            <div className="flex-1">
+            {/* Right Main Area: Compact Search & Filter Bar + Product Grid */}
+            <div className="flex-1 min-w-0 w-full space-y-6">
+              
+              {/* Compact Search & Filter Control Card (Aligned right above 1st product card!) */}
+              <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200/80">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
+                  
+                  {/* Compact Search Input */}
+                  <div className="relative flex-1">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
+                      🔍
+                    </span>
+                    <input
+                      type="text"
+                      placeholder="Search products..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full h-11 pl-10 pr-9 rounded-2xl bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white text-xs sm:text-sm text-slate-900 font-medium transition-all outline-none"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery("")}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs bg-slate-200 hover:bg-slate-300 w-5 h-5 rounded-full flex items-center justify-center transition"
+                        title="Clear search"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Filter Dropdowns - Clean & Compact Row */}
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      value={priceRange}
+                      onChange={(e) => setPriceRange(e.target.value)}
+                      className="h-11 px-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:border-purple-500 focus:bg-white transition outline-none cursor-pointer"
+                    >
+                      <option value="all">💰 All Prices</option>
+                      <option value="under500">Under ₹500</option>
+                      <option value="500to1000">₹500 – ₹1,000</option>
+                      <option value="1000to2000">₹1,000 – ₹2,000</option>
+                      <option value="above2000">Above ₹2,000</option>
+                    </select>
+
+                    <select
+                      value={selectedCondition}
+                      onChange={(e) => setSelectedCondition(e.target.value)}
+                      className="h-11 px-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:border-purple-500 focus:bg-white transition outline-none cursor-pointer"
+                    >
+                      <option value="all">✨ All Conditions</option>
+                      {conditions.map((cond) => (
+                        <option key={cond} value={cond}>
+                          {cond}
+                        </option>
+                      ))}
+                    </select>
+
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="h-11 px-3.5 rounded-2xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-700 focus:border-purple-500 focus:bg-white transition outline-none cursor-pointer"
+                    >
+                      <option value="default">🔃 Sort: Featured</option>
+                      <option value="price-low">Price: Low to High</option>
+                      <option value="price-high">Price: High to Low</option>
+                      <option value="name-az">Name: A to Z</option>
+                    </select>
+
+                    {hasActiveFilters && (
+                      <button
+                        onClick={resetAllFilters}
+                        className="h-11 px-3.5 rounded-2xl bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 text-xs font-extrabold transition flex items-center justify-center gap-1 cursor-pointer"
+                      >
+                        <span>↺</span> Reset
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Showing Result Counter Header */}
+              <div className="flex items-center justify-between px-1">
+                <p className="text-xs sm:text-sm font-bold text-slate-500">
+                  Showing <span className="text-purple-600 font-extrabold text-base">{filteredProducts.length}</span> {filteredProducts.length === 1 ? "product" : "products"}
+                  {selectedCategory !== "All" && <span> in <span className="text-slate-900 font-bold">{selectedCategory}</span></span>}
+                  {searchQuery && <span> matching "<span className="text-slate-900 font-bold">{searchQuery}</span>"</span>}
+                </p>
+              </div>
+
+              {/* Product Grid */}
               {filteredProducts.length === 0 ? (
-                <div className="text-center py-20 text-gray-400 text-lg bg-white rounded-2xl border">
-                  No products found in "{selectedCategory}".
+                <div className="text-center py-20 px-6 bg-white rounded-3xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center">
+                  <div className="w-16 h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-3xl mb-4">
+                    🔍
+                  </div>
+                  <h3 className="text-xl font-bold text-slate-900">No Products Found</h3>
+                  <p className="text-slate-500 text-sm mt-1 max-w-md">
+                    We couldn't find any products matching your current search or filter criteria.
+                  </p>
+                  <button
+                    onClick={resetAllFilters}
+                    className="mt-6 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-2xl text-sm font-bold shadow-md hover:shadow-lg transition cursor-pointer"
+                  >
+                    Reset All Filters
+                  </button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {filteredProducts.map((product) => (
                     <ProductCard key={product.id} product={product} />
                   ))}
@@ -294,6 +520,7 @@ export default function GalleryPage() {
           </div>
         </div>
       </main>
+      <Footer />
     </>
   );
 }
