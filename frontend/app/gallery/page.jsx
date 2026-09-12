@@ -301,7 +301,7 @@ export default function GalleryPage() {
       <Navbar />
 
       <main className="min-h-screen bg-slate-50/70 ">
-        <div className="max-w-7xl ">
+        <div className="max-w-8xl ">
 
         <section className="relative overflow-hidden bg-slate-950 text-white">
         <div className="absolute -right-28 -top-36 h-96 w-96 rounded-full bg-fuchsia-500/20 blur-3xl" />
