@@ -1,12 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Menu, X } from "lucide-react";
+import { Heart, Menu, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useFavorites } from "@/context/FavoritesContext";
 import { useEffect, useState, useRef } from "react";
 
 export default function Navbar() {
   const { isLoggedIn, isVendor, logout } = useAuth();
+  const { favorites } = useFavorites();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -33,6 +35,17 @@ export default function Navbar() {
           <Link href="/">Home</Link>
           <Link href="/gallery">Gallery</Link>
           <Link href="/vendors">Vendors</Link>
+          {isLoggedIn && !isVendor && (
+            <Link href="/wishlist" className="flex items-center gap-2">
+              <Heart size={17} />
+              Wishlist
+              {favorites.length > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F5AE30] px-1 text-xs font-bold text-[#081225]">
+                  {favorites.length}
+                </span>
+              )}
+            </Link>
+          )}
           {isLoggedIn && isVendor && <Link href="/reviews">Community</Link>}
           {isLoggedIn && isVendor && <Link href="/subscription">Subscription</Link>}
         </nav>
@@ -100,8 +113,79 @@ export default function Navbar() {
               </Link>
             </>
           )}
+
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            className="md:hidden w-10 h-10 rounded-xl border border-white/20 text-white flex items-center justify-center hover:bg-white/10 transition duration-200"
+            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={mobileMenuOpen}
+          >
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
         </div>
       </div>
+
+      {mobileMenuOpen && (
+        <nav className="md:hidden border-t border-white/10 px-6 py-4 text-white">
+          <div className="flex flex-col gap-1">
+            <Link
+              href="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-lg px-3 py-2.5 hover:bg-white/10"
+            >
+              Home
+            </Link>
+            <Link
+              href="/gallery"
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-lg px-3 py-2.5 hover:bg-white/10"
+            >
+              Gallery
+            </Link>
+            <Link
+              href="/vendors"
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-lg px-3 py-2.5 hover:bg-white/10"
+            >
+              Vendors
+            </Link>
+            {isLoggedIn && !isVendor && (
+              <Link
+                href="/wishlist"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-white/10"
+              >
+                <Heart size={17} />
+                Wishlist
+                {favorites.length > 0 && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F5AE30] px-1 text-xs font-bold text-[#081225]">
+                    {favorites.length}
+                  </span>
+                )}
+              </Link>
+            )}
+            {isLoggedIn && isVendor && (
+              <Link
+                href="/reviews"
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-lg px-3 py-2.5 hover:bg-white/10"
+              >
+                Community
+              </Link>
+            )}
+            {isLoggedIn && isVendor && (
+              <Link
+                href="/subscription"
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-lg px-3 py-2.5 hover:bg-white/10"
+              >
+                Subscription
+              </Link>
+            )}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }

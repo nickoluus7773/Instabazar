@@ -96,6 +96,27 @@ export const getVendorStats = async (token) => {
   }
 };
 
+export const getVendorWishlistAnalysis = async (token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/vendor/wishlist-analysis/`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(response.status === 401 ? "Unauthorized" : `Error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to fetch wishlist analysis:", error);
+    throw error;
+  }
+};
+
 export const getVendorProducts = async (token, page = 1, pageSize = 10) => {
   try {
     const response = await fetch(

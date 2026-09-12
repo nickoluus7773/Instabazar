@@ -7,41 +7,6 @@ export const categories = [
   { id: 6, icon: "🏠", name: "Home & Decor", count: 1 },
 ];
 
-export const featuredProducts = [
-  {
-    id: 1,
-    title: "Classic Novel Collection",
-    vendor: "Thrift Queen",
-    price: 899,
-    category: "Books",
-    featured: true,
-  },
-  {
-    id: 2,
-    title: "Macrame Wall Hanging",
-    vendor: "Urban Picks",
-    price: 1199,
-    category: "Home & Decor",
-    featured: true,
-  },
-  {
-    id: 3,
-    title: "Portable Vinyl Player",
-    vendor: "Urban Picks",
-    price: 3499,
-    category: "Electronics",
-    featured: true,
-  },
-  {
-    id: 4,
-    title: "Gold Chain Necklace",
-    vendor: "Urban Picks",
-    price: 349,
-    category: "Accessories",
-    featured: true,
-  },
-];
-
 export const vendors = [
   {
     id: 1,

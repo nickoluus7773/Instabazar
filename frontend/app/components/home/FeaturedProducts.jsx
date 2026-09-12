@@ -2,51 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-
-const FALLBACK_PRODUCTS = [
-  {
-    id: 1,
-    productTitle: "Handmade Cotton Kurta",
-    productPrice: "1299.00",
-    productImage: "https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=600",
-    category: "Clothing",
-  },
-  {
-    id: 2,
-    productTitle: "Silver Oxidized Jhumkas",
-    productPrice: "499.00",
-    productImage: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=600",
-    category: "Accessories",
-  },
-  {
-    id: 3,
-    productTitle: "Macrame Wall Hanging",
-    productPrice: "899.00",
-    productImage: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=600",
-    category: "Home Decor",
-  },
-  {
-    id: 4,
-    productTitle: "Block Print Tote Bag",
-    productPrice: "349.00",
-    productImage: "https://images.unsplash.com/photo-1544816155-12df9643f363?w=600",
-    category: "Accessories",
-  },
-  {
-    id: 5,
-    productTitle: "Indigo Dyed Scarf",
-    productPrice: "599.00",
-    productImage: "https://images.unsplash.com/photo-1601924638867-3a6de6b7a500?w=600",
-    category: "Clothing",
-  },
-  {
-    id: 6,
-    productTitle: "Ceramic Plant Pot Set",
-    productPrice: "749.00",
-    productImage: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=600",
-    category: "Home Decor",
-  },
-];
+import API_BASE_URL from "@/lib/api";
 
 // Helper to pick N random items from an array
 function getRandomItems(array, n = 4) {
@@ -57,10 +13,6 @@ function getRandomItems(array, n = 4) {
 
 export default function FeaturedProducts() {
   const [featured, setFeatured] = useState([]);
-
-  useEffect(() => {
-    fetchLiveProducts();
-  }, []);
 
   async function fetchLiveProducts() {
     const urlsToTry = [
@@ -91,9 +43,13 @@ export default function FeaturedProducts() {
       }
     }
 
-    // Fallback to random 4 items from catalog
-    setFeatured(getRandomItems(FALLBACK_PRODUCTS, 4));
+    setFeatured([]);
   }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => fetchLiveProducts(), 0);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   return (
     <section className="bg-[#081225] max-w-8xl mx-auto px-6 py-20">
@@ -113,12 +69,12 @@ export default function FeaturedProducts() {
 
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {featured.map((product) => {
-          const imageSrc =
-            product.productImage ||
-            product.image ||
-            "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600";
-          const title = product.productTitle || product.title || "Featured Product";
-          const price = product.productPrice || product.price || "999";
+          const image = product.productImage || product.image;
+          const imageSrc = image?.startsWith("http")
+            ? image
+            : `${API_BASE_URL}${image?.startsWith("/") ? "" : "/"}${image || ""}`;
+          const title = product.productTitle || product.title;
+          const price = product.productPrice || product.price;
           const categoryName =
             typeof product.category === "object"
               ? product.category?.categoryName || "Featured"
@@ -132,10 +88,6 @@ export default function FeaturedProducts() {
                     src={imageSrc}
                     alt={title}
                     className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src =
-                        "https://images.unsplash.com/photo-1560343090-f0409e92791a?w=600";
-                    }}
                   />
                   <span className="absolute top-3 left-3 bg-purple-600/90 backdrop-blur-md text-white text-xs font-semibold px-3 py-1 rounded-full shadow">
                     {categoryName}

@@ -6,7 +6,7 @@ from django.db.models import Count, Q
 from decimal import Decimal, InvalidOperation
 from .models import Vendor
 from .serializers import VendorSerializer, VendorDetailSerializer
-from products.models import Product
+from products.models import Product, WishlistItem
 
 
 class PublicVendorListView(viewsets.ReadOnlyModelViewSet):
@@ -90,7 +90,7 @@ class VendorViewSet(viewsets.ModelViewSet):
             stats = {
                 "total_products": total_products,
                 "total_views": total_views if total_views > 0 else 0,
-                "total_favorites": total_products * 9,
+                "total_favorites": WishlistItem.objects.filter(product__vendor=vendor).count(),
                 "total_orders": total_products * 3,
                 "total_revenue": revenue,
                 "average_rating": 4.8 if total_products > 0 else 0.0,
@@ -102,6 +102,44 @@ class VendorViewSet(viewsets.ModelViewSet):
                 {"error": "Vendor profile not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+    @action(detail=False, methods=['get'], url_path='wishlist-analysis')
+    def wishlist_analysis(self, request):
+        """Return wishlist demand counts for products owned by this vendor."""
+        try:
+            vendor = Vendor.objects.get(user=request.user)
+        except Vendor.DoesNotExist:
+            return Response(
+                {"error": "Vendor profile not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        products = vendor.products.annotate(
+            wishlist_count=Count("wishlist_items", distinct=True),
+            wishlist_customer_count=Count("wishlist_items__user", distinct=True),
+        ).order_by("-wishlist_customer_count", "productTitle")
+
+        product_data = [
+            {
+                "id": product.id,
+                "title": product.productTitle,
+                "image": product.productImage.url if product.productImage else None,
+                "wishlist_count": product.wishlist_count,
+                "customer_count": product.wishlist_customer_count,
+            }
+            for product in products
+        ]
+
+        return Response({
+            "total_wishlist_saves": sum(item["wishlist_count"] for item in product_data),
+            "total_customers": len({
+                user_id
+                for product in products
+                for user_id in product.wishlist_items.values_list("user_id", flat=True)
+            }),
+            "most_wishlisted_product": product_data[0] if product_data and product_data[0]["customer_count"] else None,
+            "products": product_data,
+        })
 
     def product_detail(self, request, product_id):
         """Read, update, or remove one product owned by the current vendor."""
@@ -131,7 +169,8 @@ class VendorViewSet(viewsets.ModelViewSet):
         category_name = request.data.get("category")
         condition = request.data.get("condition", request.data.get("productCondition"))
         size = request.data.get("size", request.data.get("productSize"))
-        image_url = request.data.get("image_url", request.data.get("productImage"))
+        image_file = request.FILES.get("productImage") or request.FILES.get("image")
+        image_url = request.data.get("image_url")
 
         if title is not None:
             if not str(title).strip():
@@ -159,7 +198,9 @@ class VendorViewSet(viewsets.ModelViewSet):
             product.productCondition = condition
         if size is not None:
             product.productSize = size
-        if image_url is not None:
+        if image_file:
+            product.productImage = image_file
+        elif image_url is not None:
             product.productImage = image_url
 
         product.save()
