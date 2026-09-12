@@ -22,6 +22,8 @@ export default function EditProduct() {
     size: "",
     image_url: "",
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -42,6 +44,7 @@ export default function EditProduct() {
           size: product.productSize || "",
           image_url: product.productImage || "",
         });
+        setImagePreview(product.productImage || "");
       }
     } catch (err) {
       setError("Failed to load product");
@@ -78,6 +81,22 @@ export default function EditProduct() {
     }));
   };
 
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    setFormData((prev) => ({ ...prev, image_url: "" }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -85,7 +104,20 @@ export default function EditProduct() {
 
     try {
       const token = localStorage.getItem("accessToken");
-      await updateProduct(token, productId, formData);
+      const payload = new FormData();
+      Object.entries(formData).forEach(([key, value]) => {
+        if (key !== "image_url") {
+          payload.append(key, value);
+        }
+      });
+
+      if (imageFile) {
+        payload.append("productImage", imageFile);
+      } else {
+        payload.append("image_url", formData.image_url);
+      }
+
+      await updateProduct(token, productId, payload);
       router.push("/vendor/products");
     } catch (err) {
       setError("Failed to update product. Please try again.");
@@ -226,19 +258,54 @@ export default function EditProduct() {
             </div>
 
             <div>
-  <label className="block text-sm font-medium text-gray-700 mb-2">
-    Product image URL
-  </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Product image URL or file
+              </label>
 
-  <input
-    type="text"
-    name="image_url"
-    value={formData.image_url}
-    onChange={handleChange}
-    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-    placeholder="https://... or /media/products/..."
-  />
-</div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  name="image_url"
+                  value={imageFile ? "[Local image selected]" : formData.image_url}
+                  onChange={handleChange}
+                  disabled={Boolean(imageFile)}
+                  className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                  placeholder="https://... or /media/products/..."
+                />
+                <label className="px-4 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg cursor-pointer hover:bg-blue-100 transition-colors">
+                  Choose file
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+
+              {imagePreview && (
+                <div className="mt-3 flex items-center gap-3 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                  <img
+                    src={imagePreview}
+                    alt="Product preview"
+                    className="w-16 h-16 object-cover rounded-lg border border-gray-300"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                  <p className="flex-1 text-sm text-gray-600 truncate">
+                    {imageFile ? imageFile.name : "Current product image"}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="text-sm text-red-600 hover:text-red-800 font-semibold"
+                  >
+                    Remove
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div className="flex gap-4 pt-4">
               <button
