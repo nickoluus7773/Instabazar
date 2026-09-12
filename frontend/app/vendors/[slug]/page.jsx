@@ -26,6 +26,24 @@ const categoryEmojis = {
   Accessories: "👜",
 };
 
+function getImageUrl(image) {
+  if (!image) return "";
+
+  if (
+    (image.startsWith("http://") || image.startsWith("https://")) &&
+    !image.includes("/products/")
+  ) {
+    return image;
+  }
+
+  if (image.includes("/products/")) {
+    const filename = image.split("/products/").pop();
+    return `/images/${filename}`;
+  }
+
+  return image;
+}
+
 export default function VendorDetailPage() {
   const { slug } = useParams();
   const [vendor, setVendor] = useState(null);
@@ -104,7 +122,21 @@ export default function VendorDetailPage() {
         <section className="mx-auto max-w-7xl px-6 py-12 sm:px-8 lg:px-10 lg:py-16">
           <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between"><div><p className="text-sm font-bold uppercase tracking-[0.18em] text-fuchsia-600">The collection</p><h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Shop {vendor.business_name}</h2><p className="mt-2 text-sm text-slate-500">Take a closer look at every piece in this store.</p></div><div className="hidden items-center gap-2 text-sm font-semibold text-slate-400 sm:flex"><Search size={16} /> Curated for you</div></div>
 
-          {products.length > 0 ? <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{products.map((product) => <article key={product.id} className="group overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(15,23,42,0.12)]"><div className="relative flex h-56 items-center justify-center overflow-hidden bg-gradient-to-br from-orange-50 via-rose-50 to-fuchsia-50 text-7xl"><span className="transition duration-500 group-hover:scale-110">{product.productImage}</span></div><div className="p-5"><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{product.category}</span><h3 className="mt-4 line-clamp-2 min-h-14 text-lg font-black leading-tight text-slate-900">{product.productTitle}</h3><p className="mt-2 line-clamp-2 min-h-12 text-sm leading-6 text-slate-500">{product.productDescription}</p><div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-100 pt-4"><span className="text-xl font-black text-slate-900">₹{parseInt(product.productPrice, 10).toLocaleString()}</span><Link href={`/gallery/product/${product.id}?vendor=${slug}`} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-3.5 py-2.5 text-xs font-bold text-white transition hover:bg-fuchsia-600">View Product <ArrowUpRight size={14} /></Link></div></div></article>)}</div> : <div className="rounded-[1.75rem] border border-dashed border-slate-300 bg-white px-6 py-16 text-center"><Package className="mx-auto text-slate-300" size={38} /><h3 className="mt-4 text-xl font-black text-slate-900">No products yet</h3><p className="mt-2 text-sm text-slate-500">This vendor has not listed any products yet. Check back soon.</p></div>}
+          {products.length > 0 ? <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{products.map((product) => <article key={product.id} className="group overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_20px_45px_rgba(15,23,42,0.12)]">
+          <div className="relative flex h-56 items-center justify-center overflow-hidden bg-gradient-to-br from-orange-50 via-rose-50 to-fuchsia-50">
+  {product.productImage ? (
+    <img
+      src={getImageUrl(product.productImage)}
+      alt={product.productTitle}
+      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+    />
+  ) : (
+    <div className="text-slate-400 text-sm">
+      No image available
+    </div>
+  )}
+</div>
+          <div className="p-5"><span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600">{product.category}</span><h3 className="mt-4 line-clamp-2 min-h-14 text-lg font-black leading-tight text-slate-900">{product.productTitle}</h3><p className="mt-2 line-clamp-2 min-h-12 text-sm leading-6 text-slate-500">{product.productDescription}</p><div className="mt-5 flex items-center justify-between gap-3 border-t border-slate-100 pt-4"><span className="text-xl font-black text-slate-900">₹{parseInt(product.productPrice, 10).toLocaleString()}</span><Link href={`/gallery/product/${product.id}?vendor=${slug}`} className="inline-flex items-center gap-1.5 rounded-xl bg-slate-950 px-3.5 py-2.5 text-xs font-bold text-white transition hover:bg-fuchsia-600">View Product <ArrowUpRight size={14} /></Link></div></div></article>)}</div> : <div className="rounded-[1.75rem] border border-dashed border-slate-300 bg-white px-6 py-16 text-center"><Package className="mx-auto text-slate-300" size={38} /><h3 className="mt-4 text-xl font-black text-slate-900">No products yet</h3><p className="mt-2 text-sm text-slate-500">This vendor has not listed any products yet. Check back soon.</p></div>}
 
           <div className="mt-12 rounded-[1.5rem] border border-amber-200 bg-amber-50 p-6"><div className="flex items-start gap-3"><span className="text-2xl">⚠️</span><div><h4 className="font-black text-amber-900">Shop safely</h4><p className="mt-1 text-sm leading-6 text-amber-800">InstaBazaar helps you discover stores. Confirm details with the vendor before purchasing, and read our <Link href="/legal/disclaimer" className="font-bold underline">safety disclaimer</Link>.</p></div></div></div>
         </section>
