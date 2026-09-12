@@ -132,6 +132,7 @@ class VendorViewSet(viewsets.ModelViewSet):
         condition = request.data.get("condition", request.data.get("productCondition"))
         size = request.data.get("size", request.data.get("productSize"))
         image_url = request.data.get("image_url", request.data.get("productImage"))
+        image_file = request.FILES.get("productImage") or request.FILES.get("image")
 
         if title is not None:
             if not str(title).strip():
@@ -159,7 +160,9 @@ class VendorViewSet(viewsets.ModelViewSet):
             product.productCondition = condition
         if size is not None:
             product.productSize = size
-        if image_url is not None:
+        if image_file:
+            product.productImage = image_file
+        elif image_url is not None:
             product.productImage = image_url
 
         product.save()
