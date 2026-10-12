@@ -1,3 +1,5 @@
+import Navbar from "../components/layout/Navbar";
+import Footer from "../components/home/Footer";
 import {
   AboutHero,
   Features,
@@ -13,12 +15,12 @@ import {
   WhyChooseUs,
   CoreValues,
 } from "../components/about";
-import Navbar from "../components/layout/Navbar";
+
 
 export default function AboutPage() {
   return (
-    <>
-    <Navbar/>
+    <main className="min-h-screen bg-[#f5f7fb]">
+      <Navbar />
       <AboutHero />
       <OurStory />
       <MissionVision />
@@ -32,6 +34,8 @@ export default function AboutPage() {
       <FAQ />
       <PrimaryCTA />
       <FooterCTA />
-    </>
+      
+      <Footer />
+    </main>
   );
 }

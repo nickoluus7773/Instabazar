@@ -13,7 +13,7 @@ export default function LegalPageTemplate({
     <>
       <SectionContainer
         padding="pt-24 pb-16 lg:pt-28 lg:pb-20"
-        className="bg-gradient-to-b from-white via-slate-50/60 to-white"
+        className="bg-white"
       >
         <div className="mx-auto max-w-4xl">
           <Badge>{badge}</Badge>
@@ -28,12 +28,12 @@ export default function LegalPageTemplate({
         </div>
       </SectionContainer>
 
-      <SectionContainer padding="py-20" className="bg-white">
+      <SectionContainer padding="py-20" className="bg-[#f5f7fb]">
         <div className="mx-auto max-w-4xl space-y-8">
           {sections.map((section) => (
             <article
               key={section.heading}
-              className="rounded-3xl border border-slate-200 bg-slate-50/70 p-8 shadow-sm sm:p-10"
+              className="rounded-3xl border border-slate-200 bg-white p-8 shadow-sm sm:p-10"
             >
               <h2 className="text-2xl font-bold text-slate-900 sm:text-3xl">
                 {section.heading}
@@ -49,7 +49,7 @@ export default function LegalPageTemplate({
         </div>
       </SectionContainer>
 
-      <SectionContainer padding="py-16" className="bg-slate-50/80">
+      <SectionContainer padding="py-16" className="bg-[#f5f7fb]">
         <div className="mx-auto flex max-w-4xl flex-col gap-6 rounded-3xl border border-slate-200 bg-white p-8 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">

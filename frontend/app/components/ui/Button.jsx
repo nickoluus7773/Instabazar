@@ -7,50 +7,39 @@ export default function Button({
   href,
   className = "",
 }) {
-
   const styles = {
-
     primary:
-      "bg-gradient-to-r from-pink-500 via-orange-500 to-yellow-400 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]",
-
+      "bg-gradient-to-r from-purple-600 to-pink-500 text-white shadow-lg hover:shadow-xl hover:scale-[1.02]",
     secondary:
-      "bg-white border border-slate-300 text-slate-900 hover:border-pink-400 hover:text-pink-600",
-
-    outline:
-      "border border-pink-300 text-pink-600 hover:bg-pink-50",
-
-    dark:
-      "bg-slate-900 text-white hover:bg-slate-800",
-
+      "bg-white border border-slate-300 text-slate-900 hover:border-purple-400 hover:text-purple-600",
+    outline: "border border-purple-300 text-purple-600 hover:bg-purple-50",
+    dark: "bg-slate-900 text-white hover:bg-slate-800",
   };
 
-  const classNames = `
-        inline-flex
-        items-center
-        justify-center
-        rounded-xl
-        px-7
-        py-4
-        font-semibold
-        transition-all
-        duration-300
-        ${styles[variant]}
-        ${className}
-      `;
+  const buttonClassName = `
+    inline-flex
+    items-center
+    justify-center
+    rounded-xl
+    px-7
+    py-4
+    font-semibold
+    transition-all
+    duration-300
+    ${styles[variant]}
+    ${className}
+  `;
 
   if (href) {
     return (
-      <Link href={href} className={classNames}>
+      <Link href={href} className={buttonClassName}>
         {children}
       </Link>
     );
   }
 
   return (
-    <button
-      type={type}
-      className={classNames}
-    >
+    <button type={type} className={buttonClassName}>
       {children}
     </button>
   );

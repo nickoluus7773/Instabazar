@@ -1,38 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { Heart, Menu, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
+import { useFavorites } from "@/context/FavoritesContext";
 import { useEffect, useState, useRef } from "react";
-import API_BASE_URL from "@/lib/api";
 
 export default function Navbar() {
-  const { isLoggedIn, isVendor: authIsVendor, logout } = useAuth();
-  const [isVendor, setIsVendor] = useState(authIsVendor || false);
+  const { isLoggedIn, isVendor, logout } = useAuth();
+  const { favorites } = useFavorites();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    if (authIsVendor) {
-      setIsVendor(true);
-      return;
-    }
-    if (isLoggedIn) {
-      const token = localStorage.getItem("accessToken");
-      if (token) {
-        fetch(`${API_BASE_URL}/api/vendor/profile/`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-          .then((res) => {
-            setIsVendor(res.ok);
-          })
-          .catch(() => setIsVendor(false));
-      }
-    } else {
-      setIsVendor(false);
-    }
-  }, [isLoggedIn, authIsVendor]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -45,7 +24,7 @@ export default function Navbar() {
   }, []);
 
   return (
-    <header className="bg-[#081225] border-b shadow-sm sticky top-0 z-50">
+    <header className="bg-[#081225] border-b border-white/10 shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
         <Link href="/" className="text-3xl font-bold">
           <span className="text-white">Insta</span>
@@ -56,6 +35,17 @@ export default function Navbar() {
           <Link href="/">Home</Link>
           <Link href="/gallery">Gallery</Link>
           <Link href="/vendors">Vendors</Link>
+          {isLoggedIn && !isVendor && (
+            <Link href="/wishlist" className="flex items-center gap-2">
+              <Heart size={17} />
+              Wishlist
+              {favorites.length > 0 && (
+                <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F5AE30] px-1 text-xs font-bold text-[#081225]">
+                  {favorites.length}
+                </span>
+              )}
+            </Link>
+          )}
           {isLoggedIn && isVendor && <Link href="/reviews">Community</Link>}
           {isLoggedIn && isVendor && <Link href="/subscription">Subscription</Link>}
         </nav>
@@ -67,7 +57,7 @@ export default function Navbar() {
                 <div className="relative" ref={dropdownRef}>
                   <button
                     onClick={() => setDropdownOpen((prev) => !prev)}
-                    className="w-10 h-10 rounded-full border-2 border-[#F5AE30]-500 bg-white text-xl flex items-center justify-center hover:bg-[#F5AE30]-50 transition duration-200 focus:outline-none"
+                    className="w-10 h-10 rounded-full border-2 border-[#F5AE30] bg-white text-xl flex items-center justify-center hover:bg-[#F5AE30]/10 transition duration-200 focus:outline-none"
                     aria-label="Profile Menu"
                   >
                     👤
@@ -123,8 +113,80 @@ export default function Navbar() {
               </Link>
             </>
           )}
+
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen((prev) => !prev)}
+            className="md:hidden w-10 h-10 rounded-xl border border-white/20 text-white flex items-center justify-center hover:bg-white/10 transition duration-200"
+            aria-label={mobileMenuOpen ? "Close navigation menu" : "Open navigation menu"}
+            aria-expanded={mobileMenuOpen}
+          >
+            {mobileMenuOpen ? <X size={22} /> : <Menu size={22} />}
+          </button>
         </div>
       </div>
+
+      {mobileMenuOpen && (
+        <nav className="md:hidden border-t border-white/10 px-6 py-4 text-white">
+          <div className="flex flex-col gap-1">
+            <Link
+              href="/"
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-lg px-3 py-2.5 hover:bg-white/10"
+            >
+              Home
+            </Link>
+            <Link
+              href="/gallery"
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-lg px-3 py-2.5 hover:bg-white/10"
+            >
+              Gallery
+            </Link>
+            <Link
+              href="/vendors"
+              onClick={() => setMobileMenuOpen(false)}
+              className="rounded-lg px-3 py-2.5 hover:bg-white/10"
+            >
+              Vendors
+            </Link>
+            {isLoggedIn && !isVendor && (
+              <Link
+                href="/wishlist"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-white/10"
+              >
+                <Heart size={17} />
+                Wishlist
+                {favorites.length > 0 && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F5AE30] px-1 text-xs font-bold text-[#081225]">
+                    {favorites.length}
+                  </span>
+                )}
+              </Link>
+            )}
+            {isLoggedIn && isVendor && (
+              <Link
+                href="/reviews"
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-lg px-3 py-2.5 hover:bg-white/10"
+              >
+                Community
+              </Link>
+            )}
+            {isLoggedIn && isVendor && (
+              <Link
+                href="/subscription"
+                onClick={() => setMobileMenuOpen(false)}
+                className="rounded-lg px-3 py-2.5 hover:bg-white/10"
+              >
+                Subscription
+              </Link>
+            )}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
+  
