@@ -7,6 +7,7 @@ from decimal import Decimal, InvalidOperation
 from .models import Vendor
 from .serializers import VendorSerializer, VendorDetailSerializer
 from products.models import Product, WishlistItem
+from subscriptions.services import can_add_product, get_product_limit
 
 
 class PublicVendorListView(viewsets.ReadOnlyModelViewSet):
@@ -24,7 +25,7 @@ class PublicVendorListView(viewsets.ReadOnlyModelViewSet):
 class PublicVendorDetailView(PublicVendorListView):
     serializer_class = VendorDetailSerializer
 
-class VendorViewSet(viewsets.ModelViewSet):j
+class VendorViewSet(viewsets.ModelViewSet):
     """
     API endpoint for vendor operations.
     """
@@ -169,13 +170,8 @@ class VendorViewSet(viewsets.ModelViewSet):j
         category_name = request.data.get("category")
         condition = request.data.get("condition", request.data.get("productCondition"))
         size = request.data.get("size", request.data.get("productSize"))
-<<<<<<< HEAD
-        image_url = request.data.get("image_url", request.data.get("productImage"))
-        image_file = request.FILES.get("productImage") or request.FILES.get("image")
-=======
         image_file = request.FILES.get("productImage") or request.FILES.get("image")
         image_url = request.data.get("image_url")
->>>>>>> 79da60eba3a16e7d88459bdfdd70983bb3f9bc45
 
         if title is not None:
             if not str(title).strip():
@@ -271,6 +267,23 @@ class VendorViewSet(viewsets.ModelViewSet):j
             image_file = request.FILES.get("productImage") or request.FILES.get("image")
 
             category_obj, _ = Category.objects.get_or_create(categoryName=category_name)
+
+            if not can_add_product(vendor):
+                product_limit = get_product_limit(vendor)
+
+                return Response(
+                    {
+                        "success": False,
+                        "message": (
+                            f"Your current subscription allows a maximum of "
+                            f"{product_limit} products. Upgrade your plan to add more."
+                        ),
+                        "code": "PRODUCT_LIMIT_REACHED",
+                        "product_limit": product_limit,
+                        "upgrade_required": True,
+                    },
+                    status=status.HTTP_403_FORBIDDEN,
+                )
 
             product = Product.objects.create(
                 vendor=vendor,

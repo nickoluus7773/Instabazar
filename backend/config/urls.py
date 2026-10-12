@@ -26,6 +26,8 @@ urlpatterns = [
 
     # Reviews
     path("api/", include("reviews.urls")),
+    path("subscriptions/", include("subscriptions.urls")),
+
 ]
 
 if settings.DEBUG:
