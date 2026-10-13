@@ -1,3 +1,4 @@
+from django.db import transaction
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -95,7 +96,7 @@ class VendorViewSet(viewsets.ModelViewSet):
                 "total_orders": total_products * 3,
                 "total_revenue": revenue,
                 "average_rating": 4.8 if total_products > 0 else 0.0,
-                "max_products": 50,
+                "max_products": get_product_limit(vendor),
             }
             return Response(stats)
         except Vendor.DoesNotExist:
@@ -240,12 +241,12 @@ class VendorViewSet(viewsets.ModelViewSet):
                 {"error": "Vendor profile not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
-
+    @transaction.atomic
     @action(detail=False, methods=['post'])
     def create_product(self, request):
         """Create a new product"""
         try:
-            vendor = Vendor.objects.get(user=request.user)
+            vendor = Vendor.objects.select_for_update().get(user=request.user)            
             from products.models import Product, Category
             from products.serializers import ProductSerializer
 

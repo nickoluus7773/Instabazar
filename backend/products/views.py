@@ -1,8 +1,11 @@
+from django.db import transaction
 from rest_framework import status, viewsets
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-
+from rest_framework.exceptions import PermissionDenied
+from subscriptions.services import can_add_product, get_product_limit
+from vendor.models import Vendor
 
 from .models import Product, WishlistItem
 from .serializers import ProductSerializer
@@ -11,57 +14,49 @@ from .serializers import ProductSerializer
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
-    permission_classes = [AllowAny]
 
     def get_permissions(self):
-        # Anyone can browse products, but only authenticated users
-        # can create, update, or delete products.
         if self.action in ["list", "retrieve"]:
             return [AllowAny()]
         return [IsAuthenticated()]
 
-    def create(self, request, *args, **kwargs):
-        from vendor.models import Vendor
+    def get_queryset(self):
+        queryset = Product.objects.select_related("vendor")
 
-        vendor = Vendor.objects.filter(user=request.user).first()
+        if self.action in ["list", "retrieve"]:
+            return queryset.filter(is_active=True)
+
+        if not self.request.user.is_authenticated:
+            return Product.objects.none()
+
+        return queryset.filter(vendor__user=self.request.user)
+
+    @transaction.atomic
+    def perform_create(self, serializer):
+        vendor = Vendor.objects.select_for_update().filter(
+            user=self.request.user
+        ).first()
 
         if vendor is None:
-            return Response(
-                {"detail": "Vendor profile not found."},
-                status=status.HTTP_403_FORBIDDEN,
+            raise PermissionDenied(
+                "You must have a vendor profile to create products."
             )
 
         if not can_add_product(vendor):
-            product_limit = get_product_limit(vendor)
+            limit = get_product_limit(vendor)
 
-            return Response(
-                {
-                    "success": False,
-                    "message": (
-                        f"Your current subscription allows a maximum of "
-                        f"{product_limit} products. Upgrade your plan "
-                        "to add more."
-                    ),
-                    "code": "PRODUCT_LIMIT_REACHED",
-                    "product_limit": product_limit,
-                    "upgrade_required": True,
-                },
-                status=status.HTTP_403_FORBIDDEN,
-            )
+            raise PermissionDenied({
+                "success": False,
+                "message": (
+                    f"Your current subscription allows a maximum of "
+                    f"{limit} products. Upgrade your plan to add more."
+                ),
+                "code": "PRODUCT_LIMIT_REACHED",
+                "product_limit": limit,
+                "upgrade_required": True,
+            })
 
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
-        # Associate the new product with the authenticated vendor.
         serializer.save(vendor=vendor)
-
-        headers = self.get_success_headers(serializer.data)
-
-        return Response(
-            serializer.data,
-            status=status.HTTP_201_CREATED,
-            headers=headers,
-        )
 
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])

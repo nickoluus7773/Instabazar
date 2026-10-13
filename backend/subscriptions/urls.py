@@ -1,6 +1,11 @@
 from django.urls import path
 
-from subscriptions.views import *
+from subscriptions.views import (
+    SubscriptionPlansView,
+    CurrentSubscriptionView,
+    SubscriptionHistoryView,
+    SubscribeView,
+)
 
 urlpatterns = [
     path("plans/", SubscriptionPlansView.as_view(), name="subscription-plans"),
