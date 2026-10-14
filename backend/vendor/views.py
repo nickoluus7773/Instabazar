@@ -8,7 +8,60 @@ from decimal import Decimal, InvalidOperation
 from .models import Vendor
 from .serializers import VendorSerializer, VendorDetailSerializer
 from products.models import Product, WishlistItem
-from subscriptions.services import can_add_product, get_product_limit
+from subscriptions.services import (
+    can_add_product,
+    get_product_limit,
+    get_effective_plan,
+)
+import re
+
+from django.shortcuts import get_object_or_404, redirect
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+from rest_framework import status
+from subscriptions.services import (
+    can_add_product,
+    get_product_limit,
+    vendor_has_feature,
+)
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def public_vendor_instagram_redirect(request, store_slug):
+    """
+    Redirect customers to a vendor's Instagram profile only when
+    the vendor's effective subscription allows Instagram redirects.
+    """
+
+    vendor = get_object_or_404(
+        Vendor,
+        store_slug=store_slug,
+        verification_status="verified",
+    )
+
+    if not vendor_has_feature(vendor, "instagram_redirect"):
+        return Response(
+            {
+                "code": "INSTAGRAM_REDIRECT_UPGRADE_REQUIRED",
+                "detail": (
+                    "This vendor's subscription does not include "
+                    "Instagram redirects."
+                ),
+                "upgrade_required": True,
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    handle = (vendor.instagram_handle or "").strip().lstrip("@")
+
+    # Accept usernames only, not arbitrary URLs.
+    if not handle or not re.fullmatch(r"[A-Za-z0-9._]{1,30}", handle):
+        return Response(
+            {"detail": "This vendor has no valid Instagram handle."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    return redirect(f"https://www.instagram.com/{handle}/")
 
 
 class PublicVendorListView(viewsets.ReadOnlyModelViewSet):
@@ -71,77 +124,154 @@ class VendorViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_404_NOT_FOUND
             )
 
+    
     @action(detail=False, methods=['get'])
     def stats(self, request):
-        """Get vendor statistics dynamically based on the vendor's products."""
-        try:
-            vendor = Vendor.objects.get(user=request.user)
-            products = vendor.products.all()
-            total_products = products.count()
-            total_views = sum(getattr(product, 'views_count', 0) for product in products)
-            if total_views == 0 and total_products > 0:
-                total_views = total_products * 48 + 15
+        """Return real, plan-aware vendor overview metrics."""
 
-            revenue = 0
-            for product in products:
-                try:
-                    revenue += float(product.productPrice) * 3
-                except (ValueError, TypeError):
-                    pass
+        vendor = Vendor.objects.filter(user=request.user).first()
 
-            stats = {
-                "total_products": total_products,
-                "total_views": total_views if total_views > 0 else 0,
-                "total_favorites": WishlistItem.objects.filter(product__vendor=vendor).count(),
-                "total_orders": total_products * 3,
-                "total_revenue": revenue,
-                "average_rating": 4.8 if total_products > 0 else 0.0,
-                "max_products": get_product_limit(vendor),
-            }
-            return Response(stats)
-        except Vendor.DoesNotExist:
-            return Response(
-                {"error": "Vendor profile not found"},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-    @action(detail=False, methods=['get'], url_path='wishlist-analysis')
-    def wishlist_analysis(self, request):
-        """Return wishlist demand counts for products owned by this vendor."""
-        try:
-            vendor = Vendor.objects.get(user=request.user)
-        except Vendor.DoesNotExist:
+        if vendor is None:
             return Response(
                 {"error": "Vendor profile not found"},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        products = vendor.products.annotate(
-            wishlist_count=Count("wishlist_items", distinct=True),
-            wishlist_customer_count=Count("wishlist_items__user", distinct=True),
-        ).order_by("-wishlist_customer_count", "productTitle")
+        plan = get_effective_plan(vendor)
+        products = vendor.products.all()
+
+        total_products = products.count()
+
+        total_favorites = WishlistItem.objects.filter(
+            product__vendor=vendor
+        ).count()
+
+        stats = {
+            "total_products": total_products,
+            "total_views": None,
+            "total_favorites": total_favorites,
+            "total_orders": None,
+            "total_revenue": None,
+            "average_rating": None,
+            "max_products": plan.max_products,
+            "analytics_level": plan.analytics_level,
+        }
+
+        # Advanced analytics: count distinct users who saved
+        # at least one product from this vendor.
+        if plan.analytics_level == "advanced":
+            stats["total_wishlist_customers"] = (
+                WishlistItem.objects.filter(product__vendor=vendor)
+                .values("user_id")
+                .distinct()
+                .count()
+            )
+
+        return Response(stats)
+
+    
+    @action(detail=False, methods=['get'], url_path='wishlist-analysis')
+    def wishlist_analysis(self, request):
+        """Return wishlist analytics according to the vendor's plan."""
+
+        vendor = Vendor.objects.filter(user=request.user).first()
+
+        if vendor is None:
+            return Response(
+                {"error": "Vendor profile not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        plan = get_effective_plan(vendor)
+
+        # Free plan: basic analytics only.
+        if plan.analytics_level == "basic":
+            return Response(
+                {
+                    "code": "ANALYTICS_UPGRADE_REQUIRED",
+                    "detail": (
+                        "Product-level wishlist analytics require "
+                        "the Standard or Advanced plan."
+                    ),
+                    "required_analytics_level": "standard",
+                    "current_analytics_level": plan.analytics_level,
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        products = list(
+            vendor.products.annotate(
+                wishlist_count=Count(
+                    "wishlist_items",
+                    distinct=True,
+                ),
+                wishlist_customer_count=Count(
+                    "wishlist_items__user",
+                    distinct=True,
+                ),
+            ).order_by(
+                "-wishlist_customer_count",
+                "productTitle",
+            )
+        )
+
+        is_advanced = plan.analytics_level == "advanced"
 
         product_data = [
             {
                 "id": product.id,
                 "title": product.productTitle,
-                "image": product.productImage.url if product.productImage else None,
+                "image": (
+                    product.productImage.url
+                    if product.productImage
+                    else None
+                ),
                 "wishlist_count": product.wishlist_count,
-                "customer_count": product.wishlist_customer_count,
+                "customer_count": (
+                    product.wishlist_customer_count
+                    if is_advanced
+                    else None
+                ),
             }
             for product in products
         ]
 
-        return Response({
-            "total_wishlist_saves": sum(item["wishlist_count"] for item in product_data),
-            "total_customers": len({
-                user_id
-                for product in products
-                for user_id in product.wishlist_items.values_list("user_id", flat=True)
-            }),
-            "most_wishlisted_product": product_data[0] if product_data and product_data[0]["customer_count"] else None,
+        response_data = {
+            "analytics_level": plan.analytics_level,
+            "total_wishlist_saves": sum(
+                item["wishlist_count"]
+                for item in product_data
+            ),
             "products": product_data,
-        })
+        }
+
+        if is_advanced:
+            total_customers = (
+                WishlistItem.objects.filter(product__vendor=vendor)
+                .values("user_id")
+                .distinct()
+                .count()
+            )
+
+            response_data.update({
+                "total_customers": total_customers,
+                "most_wishlisted_product": (
+                    product_data[0]
+                    if (
+                        product_data
+                        and product_data[0]["customer_count"] > 0
+                    )
+                    else None
+                ),
+            })
+        else:
+            response_data.update({
+                "total_customers": None,
+                "most_wishlisted_product": None,
+            })
+
+        return Response(response_data)
+
 
     def product_detail(self, request, product_id):
         """Read, update, or remove one product owned by the current vendor."""
@@ -305,3 +435,36 @@ class VendorViewSet(viewsets.ModelViewSet):
                 {"error": "Vendor profile not found"},
                 status=status.HTTP_404_NOT_FOUND
             )
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def public_vendor_instagram_redirect(request, store_slug):
+    vendor = get_object_or_404(
+        Vendor,
+        store_slug=store_slug,
+        verification_status="verified",
+    )
+
+    if not vendor_has_feature(vendor, "instagram_redirect"):
+        return Response(
+            {
+                "code": "INSTAGRAM_REDIRECT_UPGRADE_REQUIRED",
+                "detail": (
+                    "This vendor's subscription does not include "
+                    "Instagram redirects."
+                ),
+                "upgrade_required": True,
+            },
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    handle = (vendor.instagram_handle or "").strip().lstrip("@")
+
+    if not handle or not re.fullmatch(r"[A-Za-z0-9._]{1,30}", handle):
+        return Response(
+            {"detail": "This vendor has no valid Instagram handle."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    return redirect(f"https://www.instagram.com/{handle}/")

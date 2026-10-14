@@ -35,37 +35,3 @@ class VendorSubscriptionSerializer(serializers.ModelSerializer):
             "is_current",
             "created_at",
         ]
-
-
-class SubscriptionPlanSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = SubscriptionPlan
-        fields = [
-            "id",
-            "code",
-            "name",
-            "monthly_price",
-            "max_products",
-            "analytics_level",
-            "instagram_redirect",
-            "product_badges",
-            "ai_tools",
-            "bazaar_choice",
-        ]
-
-
-class VendorSubscriptionSerializer(serializers.ModelSerializer):
-    plan = SubscriptionPlanSerializer(read_only=True)
-    is_current = serializers.ReadOnlyField()
-
-    class Meta:
-        model = VendorSubscription
-        fields = [
-            "id",
-            "plan",
-            "status",
-            "starts_at",
-            "expires_at",
-            "is_current",
-            "created_at",
-        ]

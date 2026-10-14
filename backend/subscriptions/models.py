@@ -99,16 +99,19 @@ class VendorSubscription(models.Model):
             models.Index(fields=["expires_at"]),
         ]
 
+    
     @property
     def is_current(self):
         now = timezone.now()
-
         return (
             self.status == self.Status.ACTIVE
+            and self.plan.is_active
             and self.starts_at is not None
             and self.starts_at <= now
-            and (self.expires_at is None or self.expires_at > now)
+            and (
+                self.expires_at is None
+                or self.expires_at > now
+            )
         )
-
     def __str__(self):
         return f"{self.vendor.business_name} - {self.plan.name}"
