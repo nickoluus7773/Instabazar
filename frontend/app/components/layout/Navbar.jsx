@@ -54,36 +54,12 @@ export default function Navbar() {
           {isLoggedIn ? (
             <>
               {isVendor ? (
-                <div className="relative" ref={dropdownRef}>
-                  <button
-                    onClick={() => setDropdownOpen((prev) => !prev)}
-                    className="w-10 h-10 rounded-full border-2 border-[#F5AE30] bg-white text-xl flex items-center justify-center hover:bg-[#F5AE30]/10 transition duration-200 focus:outline-none"
-                    aria-label="Profile Menu"
-                  >
+               
+                <Link href="/vendor/dashboard">
+                  <button className="w-10 h-10 rounded-full border-2 border-purple-500 bg-white text-xl flex items-center justify-center hover:bg-purple-50 transition duration-200">
                     👤
                   </button>
-
-                  {dropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2 z-50">
-                      {/* UNCOMMENT IN FUTURE TO RESTORE PROFILE OPTION:
-                      <Link
-                        href="/profile"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition duration-150"
-                      >
-                        <span className="text-base">👤</span> Profile
-                      </Link>
-                      */}
-                      <Link
-                        href="/vendor/dashboard"
-                        onClick={() => setDropdownOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-purple-50 hover:text-purple-600 transition duration-150"
-                      >
-                        <span className="text-base">📊</span> Dashboard
-                      </Link>
-                    </div>
-                  )}
-                </div>
+                </Link>
               ) : (
                 <Link href="/profile">
                   <button className="w-10 h-10 rounded-full border-2 border-purple-500 bg-white text-xl flex items-center justify-center hover:bg-purple-50 transition duration-200">
@@ -156,7 +132,6 @@ export default function Navbar() {
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-white/10"
               >
-                <Heart size={17} />
                 Wishlist
                 {favorites.length > 0 && (
                   <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F5AE30] px-1 text-xs font-bold text-[#081225]">
@@ -165,15 +140,7 @@ export default function Navbar() {
                 )}
               </Link>
             )}
-            {isLoggedIn && isVendor && (
-              <Link
-                href="/reviews"
-                onClick={() => setMobileMenuOpen(false)}
-                className="rounded-lg px-3 py-2.5 hover:bg-white/10"
-              >
-                Community
-              </Link>
-            )}
+            
             {isLoggedIn && isVendor && (
               <Link
                 href="/subscription"

@@ -141,34 +141,41 @@ export const getVendorProducts = async (token, page = 1, pageSize = 10) => {
   }
 };
 
-export const createProduct = async (token, productData) => {
-  try {
-    const isFormData = typeof FormData !== "undefined" && productData instanceof FormData;
-    const headers = {
+
+export async function createProduct(token, productData) {
+  const isFormData =
+    typeof FormData !== "undefined" && productData instanceof FormData;
+
+  const response = await fetch(`${API_BASE_URL}/api/vendor/products/`, {
+    method: "POST",
+    headers: {
       Authorization: `Bearer ${token}`,
       ...(isFormData ? {} : { "Content-Type": "application/json" }),
-    };
+    },
+    body: isFormData ? productData : JSON.stringify(productData),
+  });
 
-    const response = await fetch(`${API_BASE_URL}/api/vendor/products/`, {
-      method: "POST",
-      headers,
-      body: isFormData ? productData : JSON.stringify(productData),
-    });
+  const data = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-      let errData = {};
-      try {
-        errData = await response.json();
-      } catch {}
-      throw new Error(errData.error || errData.detail || `Error: ${response.status}`);
-    }
+  if (!response.ok) {
+    const error = new Error(
+      data.message ||
+        data.detail ||
+        data.error ||
+        `Failed to create product (${response.status}).`
+    );
 
-    return await response.json();
-  } catch (error) {
-    console.error("Failed to create product:", error);
+    error.status = response.status;
+    error.code = data.code;
+    error.product_limit = data.product_limit;
+    error.upgrade_required = data.upgrade_required;
+
     throw error;
   }
-};
+
+  return data;
+}
+
 
 export const updateProduct = async (token, productId, productData) => {
   try {

@@ -93,7 +93,7 @@ export default function Settings({ user }) {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">Account Settings</h1>
+      <h1 className="text-3xl font-bold text-white">Account Settings</h1>
 
       {/* Profile Information */}
 

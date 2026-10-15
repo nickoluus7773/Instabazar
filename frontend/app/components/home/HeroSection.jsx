@@ -35,10 +35,10 @@ export default function HeroSection() {
               </Link>
 
               <Link
-                href="/vendors"
+                href="/reviews"
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl border bg-[#F5AE30] text-slate-800 font-semibold hover:bg-gray-50 transition"
               >
-                👥 Meet Vendors
+                👥 Meet Community
               </Link>
             </div>
           </div>

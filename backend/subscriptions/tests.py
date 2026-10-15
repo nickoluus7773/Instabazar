@@ -169,6 +169,26 @@ class SubscriptionServiceTests(TestCase):
         self.assertIsNone(result)
         self.assertEqual(pending.status, VendorSubscription.Status.CANCELLED)
 
+    
+    def test_selecting_free_is_idempotent_when_free_subscription_is_current(self):
+        current_free = self.create_subscription(self.free)
+        pending = change_subscription_plan(self.vendor, "standard")
+
+        result = change_subscription_plan(self.vendor, "free")
+
+        current_free.refresh_from_db()
+        pending.refresh_from_db()
+
+        self.assertIsNone(result)
+        self.assertEqual(
+            current_free.status,
+            VendorSubscription.Status.ACTIVE,
+        )
+        self.assertEqual(
+            pending.status,
+            VendorSubscription.Status.CANCELLED,
+        )
+
     def test_inactive_plan_is_not_effective_or_current(self):
         subscription = self.create_subscription(self.standard)
         self.standard.is_active = False
@@ -284,6 +304,30 @@ class SubscriptionAPITests(APITestCase):
             ).status,
             VendorSubscription.Status.PENDING,
         )
+        
+    def test_selecting_free_when_already_on_free_returns_ok(self):
+        now = timezone.now()
+
+        VendorSubscription.objects.create(
+            vendor=self.vendor,
+            plan=self.free,
+            status=VendorSubscription.Status.ACTIVE,
+            starts_at=now - timedelta(minutes=1),
+            expires_at=None,
+        )
+
+        response = self.client.post(
+            "/subscriptions/subscribe/",
+            {"plan_code": "free"},
+            format="json",
+        )
+
+        self.assertEqual(
+            response.status_code,
+            status.HTTP_200_OK,
+        )
+        self.assertEqual(response.data["plan_code"], "free")
+
 
     def test_invalid_plan_is_rejected(self):
         response = self.client.post(

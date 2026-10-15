@@ -32,7 +32,7 @@ export default function Footer() {
 
             <ul className="space-y-2 text-gray-500">
               <li>
-                <a href="/about">About</a>
+                <Link href="/aboutn">About</Link>
               </li>
 
               <li>

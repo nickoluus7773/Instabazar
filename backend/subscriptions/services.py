@@ -75,6 +75,7 @@ def can_add_product(vendor):
     return vendor.products.count() < limit
 
 
+
 @transaction.atomic
 def change_subscription_plan(vendor, plan_code):
     # Serialize plan-change requests for this vendor.
@@ -86,35 +87,48 @@ def change_subscription_plan(vendor, plan_code):
             is_active=True,
         )
     except SubscriptionPlan.DoesNotExist as exc:
-        raise ValueError("Invalid or inactive subscription plan.") from exc
+        raise ValueError(
+            "Invalid or inactive subscription plan."
+        ) from exc
 
     current = get_current_subscription(vendor)
 
-    if current and current.plan_id == plan.id:
-        raise ValueError("You are already subscribed to this plan.")
-
+    # Free is the fallback plan. Selecting it again should be harmless.
     if plan.code == SubscriptionPlan.PlanCode.FREE:
+        # Do not cancel an active paid subscription prematurely.
         if current and current.plan.monthly_price > 0:
             raise ValueError(
                 "Your paid subscription remains active until it expires."
             )
 
-        # A previous paid request must not be activated after the vendor
-        # explicitly selects Free again.
+        # Cancel outstanding paid-plan requests so they cannot later
+        # replace the vendor's explicit choice of Free.
         VendorSubscription.objects.filter(
             vendor=vendor,
             status=VendorSubscription.Status.PENDING,
-        ).update(status=VendorSubscription.Status.CANCELLED)
+        ).update(
+            status=VendorSubscription.Status.CANCELLED
+        )
+
         return None
 
-    # Keep only one pending plan choice valid for this vendor. Otherwise an
-    # older pending payment could later replace the plan the vendor chose last.
+    # Avoid creating another pending request for the current plan.
+    if current and current.plan_id == plan.id:
+        raise ValueError(
+            "You are already subscribed to this plan."
+        )
+
+    # Keep only the latest selected paid plan pending.
     VendorSubscription.objects.filter(
         vendor=vendor,
         status=VendorSubscription.Status.PENDING,
-    ).exclude(plan=plan).update(status=VendorSubscription.Status.CANCELLED)
+    ).exclude(
+        plan=plan
+    ).update(
+        status=VendorSubscription.Status.CANCELLED
+    )
 
-    # Reuse a pending request for the selected plan rather than duplicating it.
+    # Reuse an existing pending request for the selected plan.
     pending = VendorSubscription.objects.filter(
         vendor=vendor,
         plan=plan,

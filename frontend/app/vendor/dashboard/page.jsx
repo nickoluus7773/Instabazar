@@ -1,734 +1,1016 @@
+
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+  LayoutDashboard,
+  Package,
+  Heart,
+  Store,
+  CreditCard,
+  Plus,
+  ArrowUpRight,
+  RefreshCw,
+  ExternalLink,
+  CheckCircle2,
+  Clock3,
+  ShieldCheck,
+  Sparkles,
+  LockKeyhole,
+  Instagram,
+  AlertCircle,
+  ChevronRight,
+  LoaderCircle,
+} from "lucide-react";
+
 import { useAuth } from "@/context/AuthContext";
-import { getVendorProfile, getVendorStats, getVendorProducts, deleteProduct, createProduct } from "@/lib/vendorApi";
+import {
+  getVendorProfile,
+  getVendorStats,
+  getVendorProducts,
+} from "@/lib/vendorApi";
+import API_BASE_URL from "@/lib/api";
 import ApprovalStatus from "@/app/components/vendor/ApprovalStatus";
 import Navbar from "@/app/components/layout/Navbar";
+
+const navigation = [
+  { label: "Overview", href: "/vendor/dashboard", icon: LayoutDashboard },
+  { label: "My Products", href: "/vendor/products", icon: Package },
+  {
+    label: "Wishlist Analytics",
+    href: "/vendor/dashboard#wishlist-analytics",
+    icon: Heart,
+  },
+  { label: "Store Profile", href: "/vendor/profile", icon: Store },
+  { label: "Subscription", href: "/vendor/subscription", icon: CreditCard },
+];
+
+const money = (value) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(Number(value || 0));
+
+const getProductTitle = (product) =>
+  product?.productTitle || product?.title || "Untitled product";
+
+const getProductPrice = (product) =>
+  product?.productPrice ?? product?.price ?? 0;
+
+const getProductImage = (product) => {
+  const image = product?.productImage || product?.image || "";
+
+  if (!image) return "";
+  if (image.startsWith("http://") || image.startsWith("https://")) {
+    return image;
+  }
+
+  return `${API_BASE_URL.replace(/\/$/, "")}/${image.replace(/^\//, "")}`;
+};
+
+const getPlanName = (plan) => {
+  if (plan?.name) return plan.name;
+
+  const limit = plan?.max_products;
+
+  if (limit === null || limit === undefined) return "Advanced";
+  if (Number(limit) >= 50) return "Standard";
+  return "Free";
+};
+
+const formatDate = (date) => {
+  if (!date) return "Not available";
+
+  const parsed = new Date(date);
+  if (Number.isNaN(parsed.getTime())) return "Not available";
+
+  return parsed.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+function Panel({ children, className = "", id }) {
+  return (
+    <section
+      id={id}
+      className={`rounded-2xl border border-white/[0.08] bg-[#11162A] ${className}`}
+    >
+      {children}
+    </section>
+  );
+}
+
+function SectionHeading({ eyebrow, title, description, action }) {
+  return (
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <div>
+        {eyebrow && (
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-violet-400">
+            {eyebrow}
+          </p>
+        )}
+        <h2 className="text-lg font-semibold text-white">{title}</h2>
+        {description && (
+          <p className="mt-1 text-sm text-slate-400">{description}</p>
+        )}
+      </div>
+      {action}
+    </div>
+  );
+}
+
+function SmallLink({ href, children }) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center gap-1.5 text-sm font-medium text-violet-300 transition hover:text-white"
+    >
+      {children}
+      <ChevronRight size={15} />
+    </Link>
+  );
+}
+
+function MetricCard({ icon: Icon, label, value, detail, accent = "violet" }) {
+  const accents = {
+    violet: "bg-violet-500/15 text-violet-300",
+    pink: "bg-pink-500/15 text-pink-300",
+    blue: "bg-sky-500/15 text-sky-300",
+  };
+
+  return (
+    <Panel className="p-5 transition hover:border-violet-400/30">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm text-slate-400">{label}</p>
+          <p className="mt-3 break-words text-3xl font-semibold tracking-tight text-white">
+            {value}
+          </p>
+        </div>
+        <div
+          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+            accents[accent] || accents.violet
+          }`}
+        >
+          <Icon size={21} />
+        </div>
+      </div>
+      {detail && <p className="mt-3 text-xs leading-5 text-slate-500">{detail}</p>}
+    </Panel>
+  );
+}
 
 export default function VendorDashboard() {
   const router = useRouter();
   const { isLoggedIn, logout } = useAuth();
+
   const [vendor, setVendor] = useState(null);
   const [stats, setStats] = useState(null);
   const [products, setProducts] = useState([]);
+  const [productCount, setProductCount] = useState(0);
+  const [subscriptionData, setSubscriptionData] = useState(null);
+  const [wishlist, setWishlist] = useState(null);
+
   const [loading, setLoading] = useState(true);
-  const [activeNav, setActiveNav] = useState("dashboard");
-  const [dateRange, setDateRange] = useState("Last 30 Days");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
-  const [createForm, setCreateForm] = useState({
-    title: "",
-    description: "",
-    price: "",
-    category: "Clothing",
-    stock: "1",
-    condition: "New",
-    size: "M",
-    image_url: "",
-    image: null,
-  });
-  const [createLoading, setCreateLoading] = useState(false);
-  const [createError, setCreateError] = useState("");
-  const [createSuccess, setCreateSuccess] = useState("");
-  const [imagePreview, setImagePreview] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState("");
+  const [wishlistLocked, setWishlistLocked] = useState(false);
+  const [wishlistError, setWishlistError] = useState("");
 
-  async function fetchDashboardData() {
-    try {
-      const token = localStorage.getItem("accessToken");
-      if (!token) {
-        logout();
-        router.push("/login");
-        return;
-      }
+  const fetchDashboardData = useCallback(async (showRefresh = false) => {
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("accessToken")
+        : null;
 
-      const [vendorData, statsData, productsData] = await Promise.all([
-        getVendorProfile(token).catch(() => null),
-        getVendorStats(token).catch(() => null),
-        getVendorProducts(token, 1, 50).catch(() => ({ results: [] })),
-      ]);
-      setVendor(vendorData);
-      setStats(statsData);
-      setProducts(productsData?.results || []);
-    } catch (error) {
-      if (
-        error?.message?.includes("401") ||
-        error?.message?.toLowerCase().includes("unauthorized")
-      ) {
-        localStorage.removeItem("accessToken");
-        logout();
-        router.push("/login");
-      } else {
-        console.error("Failed to load dashboard:", error);
-      }
-    } finally {
+    if (!token) {
       setLoading(false);
+      router.replace("/login");
+      return;
     }
-  }
 
-  const handleDeleteProduct = async (productId) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
-    try {
-      const token = localStorage.getItem("accessToken");
-      await deleteProduct(token, productId);
-      setProducts((previous) => previous.filter((product) => product.id !== productId));
-    } catch (error) {
-      console.error("Failed to delete product:", error);
-      alert("Failed to delete product");
+    if (showRefresh) setRefreshing(true);
+    else setLoading(true);
+
+    setError("");
+
+    const requests = await Promise.allSettled([
+      getVendorProfile(token),
+      getVendorStats(token),
+      getVendorProducts(token, 1, 5),
+      fetch(`${API_BASE_URL}/subscriptions/current/`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      }).then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.detail || "Subscription unavailable");
+        return data;
+      }),
+      fetch(`${API_BASE_URL}/api/vendor/wishlist-analysis/`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      }).then(async (response) => {
+        const data = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          const err = new Error(
+            data.detail || data.message || "Wishlist analytics unavailable"
+          );
+          err.status = response.status;
+          err.code = data.code;
+          throw err;
+        }
+
+        return data;
+      }),
+    ]);
+
+    const [profileResult, statsResult, productsResult, subscriptionResult, wishlistResult] =
+      requests;
+
+    if (profileResult.status === "fulfilled") {
+      setVendor(profileResult.value);
+    } else {
+      setVendor(null);
+      setError(
+        profileResult.reason?.message ||
+          "Could not load your vendor profile. Please try again."
+      );
     }
-  };
 
-  const handleCreateChange = (event) => {
-    const { name, value } = event.target;
-    setCreateForm((previous) => ({ ...previous, [name]: value }));
-    if (name === "image_url") setImagePreview(value);
-  };
-
-  const handleCreateImageChange = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result);
-      setCreateForm((previous) => ({ ...previous, image: file, image_url: "" }));
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleCreateSubmit = async (event) => {
-    event.preventDefault();
-    setCreateLoading(true);
-    setCreateError("");
-    setCreateSuccess("");
-
-    try {
-      const token = localStorage.getItem("accessToken");
-      const payload = createForm.image ? new FormData() : {
-        title: createForm.title,
-        description: createForm.description,
-        price: createForm.price,
-        category: createForm.category,
-        stock: createForm.stock,
-        condition: createForm.condition,
-        size: createForm.size,
-        image_url: createForm.image_url || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600",
-      };
-
-      if (createForm.image) {
-        payload.append("title", createForm.title);
-        payload.append("description", createForm.description);
-        payload.append("price", createForm.price);
-        payload.append("category", createForm.category);
-        payload.append("stock", createForm.stock);
-        payload.append("condition", createForm.condition);
-        payload.append("size", createForm.size);
-        payload.append("productImage", createForm.image);
-      }
-
-      await createProduct(token, payload);
-      const updated = await getVendorProducts(token, 1, 50).catch(() => ({ results: [] }));
-      setProducts(updated.results || []);
-      setCreateForm({ title: "", description: "", price: "", category: "Clothing", stock: "1", condition: "New", size: "M", image_url: "", image: null });
-      setImagePreview("");
-      setCreateSuccess("Product published successfully.");
-      setActiveNav("products");
-    } catch (error) {
-      setCreateError(error?.message || "Failed to create product. Check your inputs.");
-    } finally {
-      setCreateLoading(false);
+    if (statsResult.status === "fulfilled") {
+      setStats(statsResult.value);
+    } else {
+      setStats(null);
     }
-  };
 
-  const totalProductsCount = products.length || stats?.total_products || 0;
-  const totalOrdersCount = products.length ? products.length * 3 : stats?.total_orders || 0;
-  const totalViewsCount = products.length
-    ? products.reduce((total, product) => total + (product.views_count || 45), 0)
-    : stats?.total_views || 0;
-  const totalRevenue = useMemo(() => {
-    if (!products.length) return stats?.total_revenue || 0;
-    return products.reduce((total, product) => {
-      const price = parseFloat(product.productPrice || product.price || 0);
-      return total + (Number.isNaN(price) ? 0 : price * 3);
-    }, 0);
-  }, [products, stats]);
+    if (productsResult.status === "fulfilled") {
+      const responseData = productsResult.value;
+      const rows = Array.isArray(responseData)
+        ? responseData
+        : responseData?.results || [];
+
+      setProducts(rows);
+      setProductCount(
+        Number(
+          responseData?.count ??
+            statsResult.value?.total_products ??
+            rows.length
+        )
+      );
+    } else {
+      setProducts([]);
+      setProductCount(
+        Number(
+          statsResult.status === "fulfilled"
+            ? statsResult.value?.total_products || 0
+            : 0
+        )
+      );
+    }
+
+    if (subscriptionResult.status === "fulfilled") {
+      setSubscriptionData(subscriptionResult.value);
+    } else {
+      setSubscriptionData(null);
+    }
+
+    if (wishlistResult.status === "fulfilled") {
+      setWishlist(wishlistResult.value);
+      setWishlistLocked(false);
+      setWishlistError("");
+    } else {
+      const reason = wishlistResult.reason;
+      const isPlanRestriction =
+        reason?.status === 403 ||
+        reason?.code === "ANALYTICS_UPGRADE_REQUIRED";
+
+      setWishlist(null);
+      setWishlistLocked(isPlanRestriction);
+      setWishlistError(
+        isPlanRestriction
+          ? ""
+          : reason?.message || "Could not load wishlist analytics."
+      );
+    }
+
+    setLoading(false);
+    setRefreshing(false);
+  }, [router]);
 
   useEffect(() => {
-    if (isLoggedIn) {
-      void Promise.resolve().then(() => fetchDashboardData());
+    fetchDashboardData();
+
+    // Re-fetch if the vendor returns to this dashboard.
+  }, [fetchDashboardData]);
+
+  useEffect(() => {
+    if (!isLoggedIn && !localStorage.getItem("accessToken")) {
+      // AuthContext handles session state. The dashboard redirects if
+      // the token is missing in fetchDashboardData.
     }
   }, [isLoggedIn]);
 
-  if (!isLoggedIn) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <div className="text-center p-8 bg-white rounded-3xl shadow-sm border max-w-md">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">Vendor Dashboard</h2>
-          <p className="text-gray-600 mb-6">Please log in to access your vendor dashboard.</p>
-          <Link
-            href="/login"
-            className="inline-block w-full py-3 px-6 rounded-2xl text-white font-bold bg-gradient-to-r from-purple-600 to-pink-500 shadow-lg hover:shadow-xl transition-all"
-          >
-            Go to Login →
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  const plan = subscriptionData?.plan || null;
+  const subscription = subscriptionData?.subscription || null;
+
+  const planName = getPlanName(plan);
+  const maxProducts = stats?.max_products ?? plan?.max_products ?? 10;
+  const isUnlimited = maxProducts === null;
+  const totalProducts = Number(stats?.total_products ?? productCount ?? 0);
+  const productLimit = isUnlimited ? null : Number(maxProducts);
+  const usagePercent =
+    isUnlimited || !productLimit
+      ? 0
+      : Math.min(100, (totalProducts / productLimit) * 100);
+
+  const analyticsLevel =
+    stats?.analytics_level || plan?.analytics_level || "basic";
+  const isAdvanced = analyticsLevel === "advanced";
+  const canViewWishlistAnalytics = analyticsLevel !== "basic";
+
+  const storeName =
+    vendor?.business_name ||
+    vendor?.store_name ||
+    vendor?.name ||
+    "Your Store";
+
+  const instagramHandle = vendor?.instagram_handle
+    ? vendor.instagram_handle.replace(/^@/, "")
+    : "";
+
+  const verificationStatus = String(
+    vendor?.verification_status || "pending"
+  ).toLowerCase();
+
+  const activeProductsCount = Number(
+  stats?.active_products ?? stats?.total_active_products ?? 0
+);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-50">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-600 font-medium">Loading Dashboard...</p>
-        </div>
-      </div>
+      <>
+        <Navbar />
+        <main className="flex min-h-[75vh] items-center justify-center bg-[#090D1A] px-4 text-white">
+          <div className="text-center">
+            <LoaderCircle
+              className="mx-auto animate-spin text-violet-400"
+              size={34}
+            />
+            <p className="mt-4 text-sm text-slate-400">
+              Loading your storefront...
+            </p>
+          </div>
+        </main>
+      </>
     );
   }
 
   if (!vendor) {
     return (
-      <div className="flex items-center justify-center min-h-screen px-4 bg-slate-50">
-        <div className="max-w-md rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-sm">
-          <div className="w-16 h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center mx-auto text-2xl font-bold mb-4">
-            🏬
-          </div>
-          <p className="text-xl font-bold text-slate-900">No Vendor Account Found</p>
-          <p className="text-sm text-slate-600 mt-2">
-            Your account is signed in, but no vendor profile is associated with this user.
-          </p>
-          <div className="mt-6 flex flex-col gap-3">
-            <Link
-              href="/register/vendor"
-              className="w-full rounded-2xl bg-gradient-to-r from-purple-600 to-pink-500 py-3 text-sm font-bold text-white shadow-md hover:shadow-lg transition-all"
-            >
-              Create Vendor Profile
-            </Link>
-            <Link
-              href="/"
-              className="w-full rounded-2xl border border-slate-300 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-            >
-              Back to Home
-            </Link>
-          </div>
-        </div>
-      </div>
+      <>
+        <Navbar />
+        <main className="flex min-h-[75vh] items-center justify-center bg-[#090D1A] px-4 text-white">
+          <Panel className="w-full max-w-lg p-8 text-center">
+            <Store className="mx-auto text-violet-300" size={38} />
+            <h1 className="mt-4 text-2xl font-semibold">Store profile unavailable</h1>
+            <p className="mt-3 text-sm leading-6 text-slate-400">
+              We could not retrieve your vendor profile. Check that your
+              backend is running and that your account has a vendor profile.
+            </p>
+            {error && (
+              <p className="mt-3 break-words text-sm text-rose-300">{error}</p>
+            )}
+            <div className="mt-6 flex flex-wrap justify-center gap-3">
+              <button
+                onClick={() => fetchDashboardData()}
+                className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-500"
+              >
+                Try again
+              </button>
+              <Link
+                href="/register/vendor"
+                className="rounded-xl border border-white/10 px-4 py-2.5 text-sm text-slate-200 hover:bg-white/5"
+              >
+                Create vendor profile
+              </Link>
+            </div>
+          </Panel>
+        </main>
+      </>
     );
   }
-
-  const recentOrders = (() => {
-    if (!products.length) {
-      return [
-        { id: 1, customer: "Rahul Sharma", avatar: "https://i.pravatar.cc/150?img=11", product: "Handmade Cotton Kurta", amount: "₹1,299", status: "Shipped", statusColor: "bg-emerald-100 text-emerald-700" },
-        { id: 2, customer: "Jay Mehta", avatar: "https://i.pravatar.cc/150?img=33", product: "Silver Oxidized Jhumkas", amount: "₹499", status: "Pending", statusColor: "bg-amber-100 text-amber-700" },
-        { id: 3, customer: "Aryan Patel", avatar: "https://i.pravatar.cc/150?img=60", product: "Macrame Wall Hanging", amount: "₹899", status: "Delivered", statusColor: "bg-emerald-100 text-emerald-700" },
-        { id: 4, customer: "Kunal Singh", avatar: "https://i.pravatar.cc/150?img=68", product: "Block Print Tote Bag", amount: "₹349", status: "Pending", statusColor: "bg-amber-100 text-amber-700" },
-      ];
-    }
-
-    const customers = [
-      { name: "Rahul Sharma", avatar: "https://i.pravatar.cc/150?img=11" },
-      { name: "Priya Roy", avatar: "https://i.pravatar.cc/150?img=25" },
-      { name: "Jay Mehta", avatar: "https://i.pravatar.cc/150?img=33" },
-      { name: "Sneha Kapoor", avatar: "https://i.pravatar.cc/150?img=47" },
-    ];
-    const statuses = [
-      { label: "Shipped", color: "bg-emerald-100 text-emerald-700" },
-      { label: "Pending", color: "bg-amber-100 text-amber-700" },
-      { label: "Delivered", color: "bg-purple-100 text-purple-700" },
-    ];
-
-    return products.slice(0, 6).map((product, index) => {
-      const customer = customers[index % customers.length];
-      const status = statuses[index % statuses.length];
-      const price = product.productPrice || product.price || "999";
-      return {
-        id: product.id || index + 1,
-        customer: customer.name,
-        avatar: customer.avatar,
-        product: product.productTitle || product.title || "Vendor Item",
-        amount: `₹${price}`,
-        status: status.label,
-        statusColor: status.color,
-      };
-    });
-  })();
-
-  const topSellingProducts = (() => {
-    if (!products.length) {
-      return [
-        { id: 1, name: "Handmade Cotton Kurta", orders: "42 Orders", image: "https://images.unsplash.com/photo-1583391733956-6c78276477e2?w=100" },
-        { id: 2, name: "Silver Oxidized Jhumkas", orders: "31 Orders", image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=100" },
-        { id: 3, name: "Macrame Wall Hanging", orders: "18 Orders", image: "https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=100" },
-      ];
-    }
-
-    return products.slice(0, 3).map((product, index) => ({
-      id: product.id || index + 1,
-      name: product.productTitle || product.title || "Vendor Item",
-      orders: `${(index + 1) * 12 + 5} Orders`,
-      image: product.productImage || product.image || "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100",
-    }));
-  })();
-
-  const navItems = [
-    { id: "dashboard", label: "Dashboard", icon: "🟣", path: "/vendor/dashboard" },
-    { id: "products", label: "My Products", icon: "🛍️", path: "/vendor/products" },
-    { id: "add_product", label: "Add Product", icon: "➕", path: "#" },
-    { id: "orders", label: "Orders", icon: "📦", path: "#" },
-    { id: "analytics", label: "Analytics", icon: "📊", path: "#" },
-    { id: "wishlist", label: "Wishlist Analytics", icon: "🤍", path: "#" },
-    { id: "profile", label: "Profile", icon: "👤", path: "/vendor/profile" },
-    { id: "subscription", label: "Subscription", icon: "💳", path: "/vendor/subscription" },
-    { id: "settings", label: "Settings", icon: "⚙️", path: "/profile" },
-  ];
 
   return (
     <>
       <Navbar />
-      <div className="min-h-screen bg-slate-50 flex">
-      {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex flex-col w-64 bg-white border-r border-slate-200 p-6 sticky top-0 h-screen overflow-y-auto">
-        {/* Brand Logo & Subtitle */}
-        <div className="mb-3">
-            <h2 className="text-lg font-bold text-slate-900">Vendor Dashboard</h2>
-          </div>
 
-        {/* Sidebar Navigation */}
-        <nav className="flex-1 space-y-1.5">
-          
-          {navItems.map((item) => {
-            const isActive = activeNav === item.id;
-            return (
-              <Link
-                key={item.id}
-                href={item.path}
-                onClick={() => setActiveNav(item.id)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-semibold transition-all ${
-                  isActive
-                    ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
-                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
-                }`}
-              >
-                <span className="text-base">{item.icon}</span>
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Logout Button */}
-        <div className="pt-6 border-t border-slate-100">
-          <button
-            onClick={() => {
-              logout();
-              router.push("/login");
-            }}
-            className="flex items-center gap-3 px-4 py-3 w-full rounded-2xl text-sm font-semibold text-rose-500 hover:bg-rose-50 transition-all"
-          >
-            <span>🚪</span>
-            <span>Logout</span>
-          </button>
-        </div>
-        </aside>
-
-      {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Navbar */}
-        <header className="bg-white border-b border-slate-200 px-6 py-4 sticky top-0 z-30 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4 flex-1 max-w-xl">
-            <button
-              onClick={() => setMobileSidebarOpen(!mobileSidebarOpen)}
-              className="lg:hidden p-2 text-slate-600 rounded-xl hover:bg-slate-100"
-            >
-              ☰
-            </button>
-            <div className="relative w-full">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
-              <input
-                type="text"
-                placeholder="Search anything..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full h-11 pl-11 pr-4 rounded-2xl bg-slate-100 border border-transparent focus:border-purple-500 focus:bg-white text-sm transition-all outline-none"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center gap-4">
-            <Link
-              href="/subscription"
-              className="text-sm font-semibold text-slate-600 hover:text-slate-900 transition-all"
-            >
-              Subscription
-            </Link>
-            {/* Notification Bell */}
-            <button className="relative w-10 h-10 rounded-2xl border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-all">
-              🔔
-              <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
-                3
-              </span>
-            </button>
-
-            {/* Vendor Profile Pill */}
-            <Link
-              href="/vendor/profile"
-              className="flex items-center gap-3 p-1.5 pr-4 rounded-2xl border border-slate-200 hover:bg-slate-50 transition-all"
-            >
-              <div className="w-9 h-9 rounded-xl bg-purple-600 text-white font-bold flex items-center justify-center overflow-hidden text-sm">
-                {vendor.logo_url ? (
-                  <img src={vendor.logo_url} alt={vendor.business_name} className="w-full h-full object-cover" />
-                ) : (
-                  vendor.business_name?.substring(0, 2).toUpperCase() || "VS"
-                )}
+      <main className="min-h-screen bg-[#090D1A] text-white">
+        <div className="mx-auto max-w-[1500px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+          <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
+            {/* Sidebar */}
+            <aside className="h-fit rounded-2xl border border-white/[0.08] bg-[#11162A] p-4 lg:sticky lg:top-6">
+              <div className="mb-6 flex items-center gap-3 px-2 py-3">
+                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-600 shadow-lg shadow-violet-950/40">
+                  <Store size={22} />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate font-semibold text-white">InstaBazaar</p>
+                  <p className="text-xs text-slate-500">Seller workspace</p>
+                </div>
               </div>
-              <div className="hidden sm:block text-left">
-                <p className="text-sm font-bold text-slate-900 leading-tight">{vendor.business_name || "Dev Shop"}</p>
-                <p className="text-xs text-slate-500">@{vendor.instagram_handle || vendor.store_slug || "dev.thrift"}</p>
-              </div>
-            </Link>
-          </div>
-        </header>
 
-        {/* Dashboard Content Container */}
-        <main className="p-6 lg:p-8 space-y-8 flex-1">
-          {activeNav === "add_product" && (
-            <section className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-              <div className="flex items-center justify-between gap-4 mb-6 border-b border-slate-100 pb-4">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">Add New Product</h2>
-                  <p className="text-xs text-slate-500 mt-1">Publish a product directly from your dashboard.</p>
-                </div>
-                <button type="button" onClick={() => setActiveNav("dashboard")} className="text-sm font-semibold text-slate-500 hover:text-slate-900">Cancel</button>
-              </div>
-              {createError && <p className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">{createError}</p>}
-              {createSuccess && <p className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{createSuccess}</p>}
-              <form onSubmit={handleCreateSubmit} className="space-y-5">
-                <input type="text" name="title" value={createForm.title} onChange={handleCreateChange} required placeholder="Product title" className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none" />
-                <textarea name="description" value={createForm.description} onChange={handleCreateChange} rows="3" placeholder="Description" className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none" />
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <input type="number" name="price" value={createForm.price} onChange={handleCreateChange} required placeholder="Price (₹)" className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none" />
-                  <input type="number" name="stock" value={createForm.stock} onChange={handleCreateChange} required placeholder="Stock quantity" className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none" />
-                </div>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                  <select name="category" value={createForm.category} onChange={handleCreateChange} className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none"><option>Clothing</option><option>Accessories</option><option>Home Decor</option><option>Footwear</option><option>Jewelry</option><option>Other</option></select>
-                  <select name="condition" value={createForm.condition} onChange={handleCreateChange} className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none"><option>New</option><option>Like New</option><option>Good</option><option>Fair</option><option>Vintage</option></select>
-                  <input type="text" name="size" value={createForm.size} onChange={handleCreateChange} placeholder="Size" className="w-full rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none" />
-                </div>
-                <div className="flex flex-col gap-3 md:flex-row">
-                  <input type="url" name="image_url" value={createForm.image_url} onChange={handleCreateChange} placeholder="Product image URL" className="min-w-0 flex-1 rounded-xl border border-slate-300 px-4 py-3 text-sm focus:border-purple-500 focus:outline-none" />
-                  <label className="cursor-pointer rounded-xl border border-purple-200 bg-purple-50 px-4 py-3 text-center text-sm font-semibold text-purple-700">Choose image<input type="file" accept="image/*" onChange={handleCreateImageChange} className="hidden" /></label>
-                </div>
-                {imagePreview && <img src={imagePreview} alt="Product preview" className="h-24 w-24 rounded-xl object-cover" />}
-                <button type="submit" disabled={createLoading} className="w-full rounded-xl bg-purple-600 px-4 py-3 text-sm font-bold text-white transition hover:bg-purple-700 disabled:opacity-50">{createLoading ? "Publishing..." : "Publish Product"}</button>
-              </form>
-            </section>
-          )}
-
-          {/* Approval Warning Banner if Pending */}
-          <ApprovalStatus isApproved={vendor.verification_status === "verified"} />
-
-          {/* Greeting Header & Date Filter */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2">
-                Hello, {vendor.business_name || "Dev"} <span className="animate-bounce">👋</span>
-              </h1>
-              <p className="text-sm text-slate-500 mt-1">
-                Here&apos;s what&apos;s happening with your store today.
+              <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-500">
+                Workspace
               </p>
-            </div>
 
-            {/* Date Picker Selector */}
-            <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-2xl px-4 py-2 text-xs font-semibold text-slate-700 shadow-sm cursor-pointer hover:bg-slate-50 transition-all">
-              <span>📅</span>
-              <span>{dateRange}</span>
-              <span className="text-slate-400 ml-1">▼</span>
-            </div>
-          </div>
+              <nav className="space-y-1">
+                {navigation.map(({ label, href, icon: Icon }, index) => (
+                  <Link
+                    key={label}
+                    href={href}
+                    className={`flex items-center gap-3 rounded-xl px-3 py-3 text-sm transition ${
+                      index === 0
+                        ? "bg-violet-500/15 font-medium text-violet-200 ring-1 ring-violet-400/20"
+                        : "text-slate-400 hover:bg-white/[0.04] hover:text-white"
+                    }`}
+                  >
+                    <Icon size={18} />
+                    <span>{label}</span>
+                    {label === "Subscription" && (
+                      <span className="ml-auto rounded-md bg-white/[0.06] px-2 py-1 text-[10px] text-slate-300">
+                        {planName}
+                      </span>
+                    )}
+                  </Link>
+                ))}
+              </nav>
 
-          {/* KPI Metrics Cards (4 Columns Grid) */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {/* Metric 1: Total Products */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
-                  📦
+              <div className="mt-6 rounded-xl border border-violet-400/15 bg-gradient-to-br from-violet-500/10 to-fuchsia-500/5 p-4">
+                <div className="flex items-center gap-2 text-violet-200">
+                  <Sparkles size={17} />
+                  <span className="text-sm font-semibold">Grow your store</span>
                 </div>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1">
-                  ↑ 12%
-                </span>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Products</p>
-                <p className="text-3xl font-extrabold text-slate-900 mt-1">
-                  {totalProductsCount}
+                <p className="mt-2 text-xs leading-5 text-slate-400">
+                  Explore plans to unlock more listings and deeper customer
+                  insights.
                 </p>
-                <p className="text-xs text-slate-400 mt-1">active in store</p>
+                <Link
+                  href="/vendor/subscription"
+                  className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-violet-300 hover:text-white"
+                >
+                  View plans <ArrowUpRight size={14} />
+                </Link>
               </div>
-            </div>
+            </aside>
 
-            {/* Metric 2: Total Orders */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl">
-                  🛍️
+            {/* Main content */}
+            <div className="min-w-0 space-y-6">
+              {error && (
+                <div className="flex items-start gap-3 rounded-xl border border-rose-400/20 bg-rose-500/10 p-4 text-sm text-rose-200">
+                  <AlertCircle className="mt-0.5 shrink-0" size={18} />
+                  <p>{error}</p>
                 </div>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1">
-                  ↑ 8%
-                </span>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Orders</p>
-                <p className="text-3xl font-extrabold text-slate-900 mt-1">{totalOrdersCount}</p>
-                <p className="text-xs text-slate-400 mt-1">all time customer orders</p>
-              </div>
-            </div>
+              )}
 
-            {/* Metric 3: Revenue */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold">
-                  ₹
+              {/* Header */}
+              <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
+                <div>
+                  <div className="mb-2 flex items-center gap-2 text-xs text-slate-500">
+                    <span>Seller workspace</span>
+                    <ChevronRight size={13} />
+                    <span className="text-violet-300">Overview</span>
+                  </div>
+                  <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                    Welcome back, {storeName}
+                  </h1>
+                  <p className="mt-2 text-sm text-slate-400">
+                    Manage your storefront and understand what shoppers are
+                    saving.
+                  </p>
                 </div>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1">
-                  ↑ 15%
-                </span>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Revenue</p>
-                <p className="text-3xl font-extrabold text-slate-900 mt-1">₹{totalRevenue.toLocaleString()}</p>
-                <p className="text-xs text-slate-400 mt-1">calculated from store items</p>
-              </div>
-            </div>
 
-            {/* Metric 4: Store Views */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-4">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl">
-                  👁️
-                </div>
-                <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full flex items-center gap-1">
-                  ↑ 10%
-                </span>
-              </div>
-              <div>
-                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Store Views</p>
-                <p className="text-3xl font-extrabold text-slate-900 mt-1">
-                  {totalViewsCount.toLocaleString()}
-                </p>
-                <p className="text-xs text-slate-400 mt-1">total item page impressions</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Grid Layout: Middle Section + Right Column Widgets */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Left 2 Columns: Recent Orders & Top Selling Products */}
-            <div className="lg:col-span-2 space-y-8">
-              {/* Recent Orders Table Card */}
-              <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-slate-900">Recent Orders</h3>
-                  <button className="text-xs font-bold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-xl hover:bg-purple-100 transition-all">
-                    View all
+                <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={() => fetchDashboardData(true)}
+                    disabled={refreshing}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2.5 text-sm text-slate-300 transition hover:bg-white/[0.07] disabled:opacity-50"
+                  >
+                    <RefreshCw
+                      size={16}
+                      className={refreshing ? "animate-spin" : ""}
+                    />
+                    Refresh
                   </button>
+                  <Link
+                    href="/vendor/products/create"
+                    className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-violet-950/30 transition hover:bg-violet-500"
+                  >
+                    <Plus size={17} />
+                    Add product
+                  </Link>
+                </div>
+              </div>
+
+              {/* Store status */}
+              <Panel className="overflow-hidden">
+                <div className="flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                  <div className="flex min-w-0 items-center gap-4">
+                    <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-white/10 bg-[#1B2140] text-xl font-semibold text-violet-200">
+                      {vendor?.logo_url || vendor?.logo ? (
+                        <img
+                          src={vendor.logo_url || vendor.logo}
+                          alt={`${storeName} logo`}
+                          className="h-full w-full object-cover"
+                        />
+                      ) : (
+                        storeName.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="truncate text-lg font-semibold">{storeName}</h2>
+                        {verificationStatus === "verified" ? (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-400/20 bg-emerald-400/10 px-2.5 py-1 text-[11px] font-medium text-emerald-300">
+                            <ShieldCheck size={13} /> Verified
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-amber-400/20 bg-amber-400/10 px-2.5 py-1 text-[11px] font-medium text-amber-300">
+                            <Clock3 size={13} />{" "}
+                            {verificationStatus === "rejected"
+                              ? "Verification rejected"
+                              : "Verification pending"}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-1 truncate text-sm text-slate-400">
+                        {instagramHandle
+                          ? `@${instagramHandle}`
+                          : "Add your Instagram handle to complete your storefront."}
+                      </p>
+                    </div>
+                  </div>
+
+                  <Link
+                    href="/vendor/profile"
+                    className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border border-white/10 px-4 py-2.5 text-sm text-slate-200 transition hover:bg-white/[0.05]"
+                  >
+                    Edit profile <ArrowUpRight size={15} />
+                  </Link>
+                </div>
+                <div className="grid grid-cols-1 border-t border-white/[0.07] sm:grid-cols-3">
+                  <div className="p-4 sm:px-6">
+                    <p className="text-xs text-slate-500">Current plan</p>
+                    <p className="mt-1 font-semibold text-white">{planName}</p>
+                  </div>
+                  <div className="border-t border-white/[0.07] p-4 sm:border-l sm:border-t-0 sm:px-6">
+                    <p className="text-xs text-slate-500">Subscription status</p>
+                    <p className="mt-1 font-semibold capitalize text-white">
+                      {subscription?.status || "Free plan"}
+                    </p>
+                  </div>
+                  <div className="border-t border-white/[0.07] p-4 sm:border-l sm:border-t-0 sm:px-6">
+                    <p className="text-xs text-slate-500">Plan expires</p>
+                    <p className="mt-1 font-semibold text-white">
+                      {subscription?.expires_at
+                        ? formatDate(subscription.expires_at)
+                        : "No expiry date"}
+                    </p>
+                  </div>
+                </div>
+              </Panel>
+
+              {/* Real metrics only */}
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                <MetricCard
+                  icon={Package}
+                  label="Total products"
+                  value={totalProducts}
+                  detail={
+                    isUnlimited
+                      ? "Unlimited listings on your current plan"
+                      : `${Math.max(0, productLimit - totalProducts)} listing${
+                          productLimit - totalProducts === 1 ? "" : "s"
+                        } remaining on your plan`
+                  }
+                  accent="violet"
+                />
+                <MetricCard
+                  icon={Heart}
+                  label="Wishlist saves"
+                  value={
+                    stats?.total_favorites === null ||
+                    stats?.total_favorites === undefined
+                      ? "—"
+                      : stats.total_favorites
+                  }
+                  detail="Total favorites recorded for your products"
+                  accent="pink"
+                />
+                
+<MetricCard
+  icon={Store}
+  label="Active listings"
+  value={stats?.active_products ?? stats?.total_active_products ?? "—"}
+  detail="Total active listings reported by the backend"
+  accent="blue"
+/>
+
+              </div>
+
+              {/* Plan usage */}
+              <Panel className="p-5 sm:p-6">
+                <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-violet-400">
+                      Your plan
+                    </p>
+                    <h2 className="mt-2 text-xl font-semibold">
+                      {planName} membership
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-400">
+                      {isUnlimited
+                        ? "Your plan has no product listing limit."
+                        : `You can list up to ${productLimit} products on this plan.`}
+                    </p>
+                  </div>
+                  <Link
+                    href="/vendor/subscription"
+                    className="inline-flex w-fit items-center gap-2 rounded-xl border border-violet-400/20 bg-violet-500/10 px-4 py-2.5 text-sm font-semibold text-violet-200 transition hover:bg-violet-500/20"
+                  >
+                    Manage subscription <ArrowUpRight size={16} />
+                  </Link>
                 </div>
 
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse text-sm">
-                    <thead>
-                      <tr className="border-b border-slate-100 text-xs font-bold text-slate-400 uppercase">
-                        <th className="pb-3">Customer</th>
-                        <th className="pb-3">Product</th>
-                        <th className="pb-3">Amount</th>
-                        <th className="pb-3 text-right">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                      {recentOrders.map((order) => (
-                        <tr key={order.id} className="hover:bg-slate-50/60 transition-all">
-                          <td className="py-3.5 pr-4 flex items-center gap-3">
-                            <img src={order.avatar} alt={order.customer} className="w-8 h-8 rounded-full object-cover" />
-                            <span className="font-semibold text-slate-800">{order.customer}</span>
-                          </td>
-                          <td className="py-3.5 px-2 text-slate-600">{order.product}</td>
-                          <td className="py-3.5 px-2 font-bold text-slate-900">{order.amount}</td>
-                          <td className="py-3.5 pl-4 text-right">
-                            <span className={`inline-block text-xs font-bold px-3 py-1 rounded-full ${order.statusColor}`}>
-                              {order.status}
+                {!isUnlimited && (
+                  <div className="mt-6">
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm">
+                      <span className="text-slate-300">Product usage</span>
+                      <span className="text-slate-400">
+                        {totalProducts} / {productLimit}
+                      </span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-white/[0.07]">
+                      <div
+                        className={`h-full rounded-full transition-all ${
+                          usagePercent >= 100
+                            ? "bg-rose-400"
+                            : "bg-gradient-to-r from-violet-500 to-fuchsia-500"
+                        }`}
+                        style={{ width: `${usagePercent}%` }}
+                      />
+                    </div>
+                    {totalProducts >= productLimit && (
+                      <p className="mt-3 text-sm text-rose-300">
+                        You have reached your product limit. Upgrade your plan
+                        to add more listings.
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                <div className="mt-6 grid gap-3 border-t border-white/[0.07] pt-5 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="flex items-center gap-2 text-sm text-slate-300">
+                    <CheckCircle2 size={16} className="shrink-0 text-emerald-400" />
+                    Product listings
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-slate-300">
+                    <CheckCircle2 size={16} className="shrink-0 text-emerald-400" />
+                    {analyticsLevel === "basic"
+                      ? "Basic analytics"
+                      : analyticsLevel === "advanced"
+                      ? "Advanced analytics"
+                      : "Standard analytics"}
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-slate-300">
+                    {plan?.instagram_redirect ? (
+                      <CheckCircle2 size={16} className="shrink-0 text-emerald-400" />
+                    ) : (
+                      <LockKeyhole size={16} className="shrink-0 text-slate-500" />
+                    )}
+                    Instagram redirect
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-slate-300">
+                    {plan?.ai_tools ? (
+                      <CheckCircle2 size={16} className="shrink-0 text-emerald-400" />
+                    ) : (
+                      <LockKeyhole size={16} className="shrink-0 text-slate-500" />
+                    )}
+                    AI tools
+                  </div>
+                </div>
+              </Panel>
+
+              {/* Product listings */}
+              <div>
+                <SectionHeading
+                  eyebrow="Your storefront"
+                  title="Recent products"
+                  description="The latest products in your catalog."
+                  action={
+                    <SmallLink href="/vendor/products">
+                      View all products
+                    </SmallLink>
+                  }
+                />
+
+                <Panel className="overflow-hidden">
+                  {products.length === 0 ? (
+                    <div className="px-5 py-12 text-center">
+                      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-violet-500/10 text-violet-300">
+                        <Package size={25} />
+                      </div>
+                      <h3 className="mt-4 font-semibold text-white">
+                        Your catalog is empty
+                      </h3>
+                      <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-slate-400">
+                        Add your first product to start building your
+                        storefront on InstaBazaar.
+                      </p>
+                      <Link
+                        href="/vendor/products/create"
+                        className="mt-5 inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold hover:bg-violet-500"
+                      >
+                        <Plus size={16} /> Add your first product
+                      </Link>
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-white/[0.06]">
+                      {products.map((product) => {
+                        const image = getProductImage(product);
+                        const active = product.is_active !== false;
+
+                        return (
+                          <div
+                            key={product.id}
+                            className="flex items-center gap-3 p-4 transition hover:bg-white/[0.02] sm:gap-4 sm:px-5"
+                          >
+                            <div className="h-14 w-14 shrink-0 overflow-hidden rounded-xl border border-white/[0.07] bg-[#1A2037]">
+                              {image ? (
+                                <img
+                                  src={image}
+                                  alt={getProductTitle(product)}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <div className="flex h-full items-center justify-center text-slate-600">
+                                  <Package size={21} />
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium text-white">
+                                {getProductTitle(product)}
+                              </p>
+                              <p className="mt-1 text-sm text-slate-400">
+                                {money(getProductPrice(product))}
+                              </p>
+                            </div>
+
+                            <span
+                              className={`hidden rounded-full px-2.5 py-1 text-xs sm:inline-flex ${
+                                active
+                                  ? "bg-emerald-400/10 text-emerald-300"
+                                  : "bg-slate-400/10 text-slate-400"
+                              }`}
+                            >
+                              {active ? "Active" : "Inactive"}
                             </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+
+                            <Link
+                              href="/vendor/products"
+                              aria-label={`Manage ${getProductTitle(product)}`}
+                              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-white/10 text-slate-400 transition hover:border-violet-400/30 hover:text-white"
+                            >
+                              <ArrowUpRight size={17} />
+                            </Link>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </Panel>
               </div>
 
-              {/* Top Selling Products Card */}
-              <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-lg font-bold text-slate-900">Top Selling Products</h3>
-                  <button className="text-xs font-bold text-purple-600 bg-purple-50 px-3 py-1.5 rounded-xl hover:bg-purple-100 transition-all">
-                    View all
-                  </button>
-                </div>
+              {/* Wishlist analytics */}
+              <div id="wishlist-analytics" className="scroll-mt-6">
+                <SectionHeading
+                  eyebrow="Customer interest"
+                  title="Wishlist analytics"
+                  description="See which products shoppers are saving."
+                  action={
+                    <Link
+                      href="/vendor/subscription"
+                      className="inline-flex items-center gap-1.5 text-sm text-violet-300 hover:text-white"
+                    >
+                      View plans <ArrowUpRight size={15} />
+                    </Link>
+                  }
+                />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                  <div className="space-y-4">
-                    {topSellingProducts.map((prod) => (
-                      <div key={prod.id} className="flex items-center gap-4 p-3 rounded-2xl bg-slate-50 hover:bg-purple-50/50 transition-all">
-                        <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-xl shadow-xs">
-                          {prod.image}
-                        </div>
+                {wishlistLocked || !canViewWishlistAnalytics ? (
+                  <Panel className="relative overflow-hidden p-6 sm:p-8">
+                    <div className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full bg-violet-500/10 blur-3xl" />
+                    <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center">
+                      <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-violet-400/20 bg-violet-500/10 text-violet-300">
+                        <LockKeyhole size={25} />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="font-semibold text-white">
+                          Unlock product-level insights
+                        </h3>
+                        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
+                          Wishlist analytics require the Standard or Advanced
+                          plan. Upgrade to see which products attract customer
+                          interest. Advanced includes customer-level wishlist
+                          insights when available.
+                        </p>
+                      </div>
+                      <Link
+                        href="/vendor/subscription"
+                        className="inline-flex w-fit shrink-0 items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold hover:bg-violet-500"
+                      >
+                        Explore plans <ArrowUpRight size={16} />
+                      </Link>
+                    </div>
+                  </Panel>
+                ) : wishlistError ? (
+                  <Panel className="p-5">
+                    <div className="flex items-start gap-3 text-sm text-amber-200">
+                      <AlertCircle size={18} className="mt-0.5 shrink-0" />
+                      <div>
+                        <p>{wishlistError}</p>
+                        <button
+                          onClick={() => fetchDashboardData(true)}
+                          className="mt-3 font-medium text-violet-300 hover:text-white"
+                        >
+                          Retry
+                        </button>
+                      </div>
+                    </div>
+                  </Panel>
+                ) : (
+                  <div className="grid gap-4 xl:grid-cols-[0.8fr_1.2fr]">
+                    <Panel className="p-5 sm:p-6">
+                      <div className="flex items-center justify-between gap-3">
                         <div>
-                          <p className="font-bold text-slate-900 text-sm">{prod.name}</p>
-                          <p className="text-xs font-semibold text-slate-500 mt-0.5">{prod.orders}</p>
+                          <p className="text-sm text-slate-400">
+                            Total wishlist saves
+                          </p>
+                          <p className="mt-3 text-4xl font-semibold text-white">
+                            {wishlist?.total_wishlist_saves ?? 0}
+                          </p>
+                        </div>
+                        <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-pink-500/10 text-pink-300">
+                          <Heart size={22} />
                         </div>
                       </div>
-                    ))}
-                  </div>
+                      {isAdvanced && (
+                        <div className="mt-5 border-t border-white/[0.07] pt-4">
+                          <p className="text-sm text-slate-400">
+                            Unique wishlist customers
+                          </p>
+                          <p className="mt-2 text-2xl font-semibold text-white">
+                            {wishlist?.total_customers ?? 0}
+                          </p>
+                        </div>
+                      )}
+                    </Panel>
 
-                  {/* Trophy Illustration Graphic */}
-                  <div className="flex flex-col items-center justify-center p-6 bg-gradient-to-b from-purple-50 to-pink-50 rounded-3xl border border-purple-100 text-center">
-                    <div className="text-5xl mb-2 animate-bounce">🏆</div>
-                    <p className="text-sm font-extrabold text-purple-900">Top Performing Store!</p>
-                    <p className="text-xs text-purple-600 mt-1">Your store sales are in the top 5% this month.</p>
+                    <Panel className="p-5 sm:p-6">
+                      <h3 className="font-semibold text-white">
+                        Most wishlisted products
+                      </h3>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Based on recorded wishlist activity
+                      </p>
+
+                      {wishlist?.products?.length ? (
+                        <div className="mt-4 space-y-3">
+                          {[...wishlist.products]
+                            .sort(
+                              (a, b) =>
+                                Number(b.wishlist_count || 0) -
+                                Number(a.wishlist_count || 0)
+                            )
+                            .slice(0, 4)
+                            .map((item) => (
+                              <div
+                                key={item.id}
+                                className="flex items-center gap-3 rounded-xl bg-white/[0.025] p-3"
+                              >
+                                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-pink-500/10 text-pink-300">
+                                  <Heart size={16} />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="truncate text-sm font-medium text-slate-200">
+                                    {item.title || "Untitled product"}
+                                  </p>
+                                  {isAdvanced && (
+                                    <p className="mt-1 text-xs text-slate-500">
+                                      {item.customer_count ?? 0} unique customers
+                                    </p>
+                                  )}
+                                </div>
+                                <p className="shrink-0 text-sm font-semibold text-white">
+                                  {item.wishlist_count ?? 0} saves
+                                </p>
+                              </div>
+                            ))}
+                        </div>
+                      ) : (
+                        <div className="py-8 text-center">
+                          <Heart className="mx-auto text-slate-600" size={25} />
+                          <p className="mt-3 text-sm text-slate-400">
+                            No wishlist activity recorded yet.
+                          </p>
+                        </div>
+                      )}
+                    </Panel>
                   </div>
+                )}
+              </div>
+
+              {/* Quick actions */}
+              <div>
+                <SectionHeading
+                  title="Quick actions"
+                  description="Shortcuts to the parts of your store you use most."
+                />
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  <Link
+                    href="/vendor/products"
+                    className="group flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-[#11162A] p-5 transition hover:border-violet-400/30 hover:bg-[#151B32]"
+                  >
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-violet-500/10 text-violet-300">
+                      <Package size={21} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-white">Manage products</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Edit or remove listings
+                      </p>
+                    </div>
+                    <ArrowUpRight
+                      size={17}
+                      className="text-slate-500 transition group-hover:text-violet-300"
+                    />
+                  </Link>
+
+                  <Link
+                    href="/vendor/profile"
+                    className="group flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-[#11162A] p-5 transition hover:border-violet-400/30 hover:bg-[#151B32]"
+                  >
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-sky-500/10 text-sky-300">
+                      <Store size={21} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-white">Store profile</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Update your public details
+                      </p>
+                    </div>
+                    <ArrowUpRight
+                      size={17}
+                      className="text-slate-500 transition group-hover:text-violet-300"
+                    />
+                  </Link>
+
+                  <Link
+                    href="/vendor/subscription"
+                    className="group flex items-center gap-4 rounded-2xl border border-white/[0.08] bg-[#11162A] p-5 transition hover:border-violet-400/30 hover:bg-[#151B32]"
+                  >
+                    <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-fuchsia-500/10 text-fuchsia-300">
+                      <CreditCard size={21} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-medium text-white">Manage plan</p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        Review features and limits
+                      </p>
+                    </div>
+                    <ArrowUpRight
+                      size={17}
+                      className="text-slate-500 transition group-hover:text-violet-300"
+                    />
+                  </Link>
                 </div>
               </div>
-            </div>
 
-            {/* Right Column: Vendor Card, Bazaar Score, Low Stock & Store Overview */}
-            <div className="space-y-6">
-              {/* Vendor Profile Card */}
-              <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm text-center">
-                <div className="w-20 h-20 rounded-full bg-slate-900 text-white font-extrabold text-2xl flex items-center justify-center mx-auto shadow-lg mb-3 overflow-hidden">
-                  {vendor.logo_url ? (
-                    <img src={vendor.logo_url} alt={vendor.business_name} className="w-full h-full object-cover" />
-                  ) : (
-                    vendor.business_name?.substring(0, 2).toUpperCase() || "DEV"
-                  )}
-                </div>
-                <h4 className="text-xl font-bold text-slate-900">{vendor.business_name || "Dev Shop"}</h4>
-                <p className="text-xs font-medium text-slate-500 mt-0.5">@{vendor.instagram_handle || vendor.store_slug || "dev.thrift"}</p>
-              </div>
-
-              {/* Bazaar Score Widget */}
-              <div className="bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 rounded-3xl p-6 border border-purple-100 shadow-sm text-center">
-                <p className="text-xs font-extrabold text-purple-700 uppercase tracking-wider">Bazaar Score</p>
-                <div className="my-3 flex items-center justify-center gap-2">
-                  <span className="text-3xl text-amber-500">⭐</span>
-                  <span className="text-4xl font-black text-slate-900">89</span>
-                  <span className="text-slate-400 font-bold text-lg">/100</span>
-                </div>
-                <p className="text-xs font-semibold text-purple-800">Great job! Keep growing 🔥</p>
-              </div>
-
-              {/* Low Stock Alert Widget */}
-              <div className="bg-rose-50/70 rounded-3xl p-5 border border-rose-200 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-xs font-extrabold text-rose-700 uppercase tracking-wider flex items-center gap-1.5">
-                    <span>⚠️</span> Low Stock Alert
-                  </span>
-                </div>
-                <div className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-rose-100">
-                  <div className="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center text-2xl">
-                    🧥
-                  </div>
-                  <div>
-                    <p className="font-bold text-slate-900 text-sm">Vintage Hoodie</p>
-                    <p className="text-xs font-bold text-rose-600 mt-0.5">Only 2 left in stock!</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Store Overview Widget */}
-              <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
-                <h4 className="text-sm font-bold text-slate-900 mb-4 uppercase tracking-wider text-xs text-slate-400">Store Overview</h4>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-600 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-xs">💜</span> Followers
-                    </span>
-                    <span className="font-extrabold text-slate-900 text-sm">{vendor.follower_count || 1245}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-600 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-pink-100 text-pink-600 flex items-center justify-center text-xs">💖</span> Products Saved
-                    </span>
-                    <span className="font-extrabold text-slate-900 text-sm">{stats?.total_favorites || 128}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-600 flex items-center gap-2">
-                      <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-600 flex items-center justify-center text-xs">⭐</span> Positive Reviews
-                    </span>
-                    <span className="font-extrabold text-slate-900 text-sm">97%</span>
-                  </div>
-                </div>
-              </div>
+              <footer className="flex flex-col justify-between gap-2 border-t border-white/[0.07] pt-5 text-xs text-slate-600 sm:flex-row">
+                <p>InstaBazaar Seller Workspace</p>
+                <p>Storefront tools and customer-interest insights</p>
+              </footer>
             </div>
           </div>
-
-          {/* Quick Actions Footer Grid */}
-          <div>
-            <h3 className="text-base font-bold text-slate-900 mb-4">Quick Actions</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Link
-                href="/vendor/products/create"
-                className="flex items-center gap-4 p-4 rounded-2xl bg-white border border-slate-200 hover:border-purple-300 hover:shadow-md transition-all group"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-purple-600 text-white flex items-center justify-center text-xl shadow-md group-hover:scale-105 transition-transform">
-                  ➕
-                </div>
-                <div>
-                  <p className="font-bold text-slate-900 text-sm">Add Product</p>
-                  <p className="text-xs text-slate-500">List a new product</p>
-                </div>
-              </Link>
-
-              <Link
-                href="/vendor/products"
-                className="flex items-center gap-4 p-4 rounded-2xl bg-white border border-slate-200 hover:border-purple-300 hover:shadow-md transition-all group"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 text-indigo-600 flex items-center justify-center text-xl group-hover:scale-105 transition-transform">
-                  📂
-                </div>
-                <div>
-                  <p className="font-bold text-slate-900 text-sm">Manage Products</p>
-                  <p className="text-xs text-slate-500">View and edit products</p>
-                </div>
-              </Link>
-
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-white border border-slate-200 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer group">
-                <div className="w-12 h-12 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl group-hover:scale-105 transition-transform">
-                  📦
-                </div>
-                <div>
-                  <p className="font-bold text-slate-900 text-sm">Orders</p>
-                  <p className="text-xs text-slate-500">View all orders</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4 p-4 rounded-2xl bg-white border border-slate-200 hover:border-purple-300 hover:shadow-md transition-all cursor-pointer group">
-                <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl group-hover:scale-105 transition-transform">
-                  📈
-                </div>
-                <div>
-                  <p className="font-bold text-slate-900 text-sm">Analytics</p>
-                  <p className="text-xs text-slate-500">Check your stats</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </main>
         </div>
-      </div>
+      </main>
     </>
   );
 }
-

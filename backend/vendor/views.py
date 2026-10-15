@@ -141,6 +141,7 @@ class VendorViewSet(viewsets.ModelViewSet):
         products = vendor.products.all()
 
         total_products = products.count()
+        active_products = vendor.products.filter(is_active=True).count()
 
         total_favorites = WishlistItem.objects.filter(
             product__vendor=vendor
@@ -148,6 +149,7 @@ class VendorViewSet(viewsets.ModelViewSet):
 
         stats = {
             "total_products": total_products,
+            "active_products": active_products,
             "total_views": None,
             "total_favorites": total_favorites,
             "total_orders": None,
