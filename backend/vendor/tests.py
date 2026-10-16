@@ -102,6 +102,7 @@ class VendorAnalyticsSubscriptionTests(TestCase):
 
         return user
 
+
     def test_free_plan_can_access_basic_stats(self):
         response = self.client.get("/api/vendor/stats/")
 
@@ -193,3 +194,81 @@ class VendorAnalyticsSubscriptionTests(TestCase):
             response.data["current_analytics_level"],
             "basic",
         )
+
+
+class InstagramProductPostUrlTests(TestCase):
+    def setUp(self):
+        SubscriptionPlan.objects.create(
+            code="free",
+            name="Free",
+            monthly_price=Decimal("0.00"),
+            max_products=10,
+            analytics_level="basic",
+        )
+        self.user = User.objects.create_user(
+            username="instagram_post_vendor",
+            password="test-password-123",
+        )
+        self.vendor = Vendor.objects.create(
+            user=self.user,
+            business_name="Instagram Post Store",
+            store_slug="instagram-post-store",
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+        self.payload = {
+            "title": "Product with post",
+            "description": "A test product",
+            "price": "99.00",
+            "category": "Clothing",
+        }
+
+    def test_create_requires_valid_product_post_url(self):
+        missing = self.client.post("/api/vendor/products/", self.payload)
+        self.assertEqual(missing.status_code, 400)
+        self.assertIn("instagram_post_url", missing.data)
+        self.assertEqual(Product.objects.filter(vendor=self.vendor).count(), 0)
+
+        invalid = self.client.post(
+            "/api/vendor/products/",
+            {**self.payload, "instagram_post_url": "https://www.instagram.com/store/"},
+        )
+        self.assertEqual(invalid.status_code, 400)
+        self.assertIn("instagram_post_url", invalid.data)
+
+    def test_create_saves_and_returns_product_post_url(self):
+        post_url = "https://www.instagram.com/p/product_post_123/"
+        created = self.client.post(
+            "/api/vendor/products/",
+            {**self.payload, "instagram_post_url": post_url},
+        )
+
+        self.assertEqual(created.status_code, 201)
+        self.assertEqual(created.data["instagram_post_url"], post_url)
+        product = Product.objects.get(pk=created.data["id"])
+        self.assertEqual(product.instagram_post_url, post_url)
+
+        public = self.client.get(f"/api/products/{product.pk}/")
+        self.assertEqual(public.status_code, 200)
+        self.assertEqual(public.data["instagram_post_url"], post_url)
+
+    def test_legacy_product_can_be_updated_with_a_post_url(self):
+        category = Category.objects.create(categoryName="Clothing")
+        product = Product.objects.create(
+            vendor=self.vendor,
+            productTitle="Legacy product",
+            productDescription="",
+            productPrice=Decimal("99.00"),
+            productStock=1,
+            productCondition="New",
+            category=category,
+        )
+        post_url = "https://instagram.com/reel/product_reel_456/"
+
+        response = self.client.patch(
+            f"/api/vendor/products/{product.pk}/",
+            {"instagram_post_url": post_url},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["instagram_post_url"], post_url)

@@ -59,6 +59,7 @@ class VendorProductSerializer(serializers.ModelSerializer):
             'views_count',
             'category',
             'productStock',
+            'instagram_post_url',
         ]
 
     def get_is_active(self, obj):

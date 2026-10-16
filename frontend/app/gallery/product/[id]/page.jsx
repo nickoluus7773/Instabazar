@@ -304,13 +304,18 @@ const [loading, setLoading] = useState(true);
             {/* CTA Buttons: Instagram DM + Save */}
             <div className="flex items-center gap-3 pt-2">
               <a
-                href={`https://www.instagram.com/${instagramHandle}/`}
+                href={product.instagram_post_url || undefined}
+                aria-disabled={!product.instagram_post_url}
+                title={!product.instagram_post_url ? "The vendor has not added an Instagram post for this product yet." : undefined}
+                onClick={(event) => {
+                  if (!product.instagram_post_url) event.preventDefault();
+                }}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 sm:flex-initial sm:px-8 py-3.5 bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold rounded-2xl text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-center"
+                className="flex-1 sm:flex-initial sm:px-8 py-3.5 bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold rounded-2xl text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-center aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
               >
                 <span>🛍️</span>
-                <span>View on Instagram</span>
+                <span>{product.instagram_post_url ? "View on Instagram" : "Instagram post unavailable"}</span>
               </a>
 
               <button

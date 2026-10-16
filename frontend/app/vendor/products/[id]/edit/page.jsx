@@ -53,6 +53,7 @@ export default function EditProduct() {
     category: "",
     size: "",
     image_url: "",
+    instagram_post_url: "",
   });
 
   const [imageFile, setImageFile] = useState(null);
@@ -86,6 +87,7 @@ export default function EditProduct() {
         category: product.category || "",
         size: product.productSize || "",
         image_url: image,
+        instagram_post_url: product.instagram_post_url || "",
       });
 
       setImagePreview(image ? getImageUrl(image) : "");
@@ -331,6 +333,25 @@ export default function EditProduct() {
                             placeholder="Describe your product..."
                           />
                         </div>
+                      </div>
+
+                      <div>
+                        <label htmlFor="instagram_post_url" className={labelClass}>
+                          Instagram product post URL <span className="text-violet-300">*</span>
+                        </label>
+                        <input
+                          id="instagram_post_url"
+                          type="url"
+                          name="instagram_post_url"
+                          value={formData.instagram_post_url}
+                          onChange={handleChange}
+                          required
+                          className={inputClass}
+                          placeholder="https://www.instagram.com/p/your-product-post/"
+                        />
+                        <p className="mt-2 text-xs leading-5 text-slate-500">
+                          Paste the direct URL of the Instagram post featuring this specific product.
+                        </p>
                       </div>
 
                       <div className="grid gap-5 sm:grid-cols-2">

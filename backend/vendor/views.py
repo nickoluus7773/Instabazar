@@ -305,6 +305,14 @@ class VendorViewSet(viewsets.ModelViewSet):
         size = request.data.get("size", request.data.get("productSize"))
         image_file = request.FILES.get("productImage") or request.FILES.get("image")
         image_url = request.data.get("image_url")
+        instagram_post_url = request.data.get("instagram_post_url")
+
+        if instagram_post_url is not None:
+            from products.serializers import ProductSerializer
+            validator = ProductSerializer(data={"instagram_post_url": instagram_post_url}, partial=True)
+            if not validator.is_valid():
+                return Response({"instagram_post_url": validator.errors.get("instagram_post_url", ["Enter a valid Instagram post URL."])[0]}, status=status.HTTP_400_BAD_REQUEST)
+            product.instagram_post_url = instagram_post_url
 
         if title is not None:
             if not str(title).strip():
@@ -398,6 +406,11 @@ class VendorViewSet(viewsets.ModelViewSet):
             size = request.data.get("size") or request.data.get("productSize") or "Standard"
             image_url = request.data.get("image_url") or request.data.get("productImage") or "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600"
             image_file = request.FILES.get("productImage") or request.FILES.get("image")
+            instagram_post_url = (request.data.get("instagram_post_url") or "").strip()
+            from products.serializers import ProductSerializer
+            validator = ProductSerializer(data={"instagram_post_url": instagram_post_url}, partial=True)
+            if not validator.is_valid():
+                return Response(validator.errors, status=status.HTTP_400_BAD_REQUEST)
 
             category_obj, _ = Category.objects.get_or_create(categoryName=category_name)
 
@@ -428,6 +441,7 @@ class VendorViewSet(viewsets.ModelViewSet):
                 productCondition=condition,
                 productSize=size,
                 productImage=image_file or image_url,
+                instagram_post_url=instagram_post_url,
             )
 
             serializer = ProductSerializer(product)
@@ -470,4 +484,3 @@ def public_vendor_instagram_redirect(request, store_slug):
         )
 
     return redirect(f"https://www.instagram.com/{handle}/")
-    

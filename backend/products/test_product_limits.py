@@ -88,6 +88,7 @@ class ProductSubscriptionLimitTests(APITestCase):
             "productStock": 5,
             "productCondition": "New",
             "category": "Clothing",
+            "instagram_post_url": "https://www.instagram.com/p/test_product_post/",
         }
 
     def vendor_product_payload(self):
@@ -98,6 +99,7 @@ class ProductSubscriptionLimitTests(APITestCase):
             "stock": 5,
             "condition": "New",
             "category": "Clothing",
+            "instagram_post_url": "https://www.instagram.com/p/test_product_post/",
         }
 
     def assert_limit_error(self, response, expected_limit):

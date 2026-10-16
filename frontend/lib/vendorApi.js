@@ -162,6 +162,7 @@ export async function createProduct(token, productData) {
       data.message ||
         data.detail ||
         data.error ||
+        data.instagram_post_url?.[0] ||
         `Failed to create product (${response.status}).`
     );
 
@@ -189,7 +190,8 @@ export const updateProduct = async (token, productId, productData) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Error: ${response.status}`);
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.instagram_post_url?.[0] || data.detail || data.error || `Error: ${response.status}`);
     }
 
     return await response.json();

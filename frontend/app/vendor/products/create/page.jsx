@@ -31,6 +31,19 @@ const inputClass =
 const labelClass =
   "mb-2 block text-sm font-medium text-slate-300";
 
+function isInstagramPostUrl(value) {
+  try {
+    const url = new URL(value.trim());
+    const pathParts = url.pathname.split("/").filter(Boolean);
+    return url.protocol === "https:" &&
+      ["instagram.com", "www.instagram.com"].includes(url.hostname.toLowerCase()) &&
+      ["p", "reel", "tv"].includes(pathParts[0]) &&
+      Boolean(pathParts[1]);
+  } catch {
+    return false;
+  }
+}
+
 export default function CreateProduct() {
   const { isLoggedIn } = useAuth();
   const router = useRouter();
@@ -44,6 +57,7 @@ export default function CreateProduct() {
     size: "M",
     image_url: "",
     image: null,
+    instagram_post_url: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -125,6 +139,11 @@ export default function CreateProduct() {
       return;
     }
 
+    if (!isInstagramPostUrl(formData.instagram_post_url)) {
+      setError("Enter a valid direct Instagram post, reel, or video URL for this product.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -134,6 +153,7 @@ export default function CreateProduct() {
       payload.append("description", formData.description.trim());
       payload.append("price", formData.price);
       payload.append("category", formData.category);
+      payload.append("instagram_post_url", formData.instagram_post_url.trim());
 
       // Retained for backend compatibility. Stock is not managed in this UI.
       payload.append("stock", "1");
@@ -339,6 +359,25 @@ export default function CreateProduct() {
                           </select>
                         </div>
                       </div>
+                    </div>
+
+                    <div>
+                      <label htmlFor="instagram_post_url" className={labelClass}>
+                        Instagram product post URL <span className="text-violet-300">*</span>
+                      </label>
+                      <input
+                        id="instagram_post_url"
+                        type="url"
+                        name="instagram_post_url"
+                        value={formData.instagram_post_url}
+                        onChange={handleChange}
+                        required
+                        className={inputClass}
+                        placeholder="https://www.instagram.com/p/your-product-post/"
+                      />
+                      <p className="mt-2 text-xs leading-5 text-slate-500">
+                        Paste the direct URL of the Instagram post featuring this specific product.
+                      </p>
                     </div>
 
                     <div className="grid gap-5 sm:grid-cols-2">

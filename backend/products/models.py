@@ -39,6 +39,9 @@ class Product(models.Model):
 
     productCondition = models.CharField(max_length=50)
 
+    # Nullable so existing listings remain readable until their vendor updates them.
+    instagram_post_url = models.URLField(max_length=500, blank=True, null=True)
+
     category = models.ForeignKey(
         Category,
         on_delete=models.CASCADE
