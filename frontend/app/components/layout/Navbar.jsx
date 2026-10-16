@@ -5,10 +5,17 @@ import { Heart, Menu, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useEffect, useState, useRef } from "react";
+import { usePathname } from "next/navigation";
 
 export default function Navbar() {
   const { isLoggedIn, isVendor, logout } = useAuth();
   const { favorites } = useFavorites();
+  const pathname = usePathname();
+
+  const isActive = (href) =>
+    href === "/"
+      ? pathname === "/"
+      : pathname === href || pathname.startsWith(`${href}/`);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -31,12 +38,35 @@ export default function Navbar() {
           <span className="text-[#F5AE30]">Bazaar</span>
         </Link>
 
+
         <nav className="hidden md:flex items-center gap-8 text-white">
-          <Link href="/">Home</Link>
-          <Link href="/gallery">Gallery</Link>
-          <Link href="/vendors">Vendors</Link>
+          {[
+            { href: "/", label: "Home" },
+            { href: "/gallery", label: "Gallery" },
+            { href: "/vendors", label: "Vendors" },
+          ].map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              aria-current={isActive(item.href) ? "page" : undefined}
+              className={`relative py-2 transition-colors ${isActive(item.href)
+                ? "text-[#F5AE30] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-[#F5AE30]"
+                : "text-white hover:text-[#F5AE30]"
+                }`}
+            >
+              {item.label}
+            </Link>
+          ))}
+
           {isLoggedIn && !isVendor && (
-            <Link href="/wishlist" className="flex items-center gap-2">
+            <Link
+              href="/wishlist"
+              aria-current={isActive("/wishlist") ? "page" : undefined}
+              className={`relative flex items-center gap-2 py-2 transition-colors ${isActive("/wishlist")
+                ? "text-[#F5AE30] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-[#F5AE30]"
+                : "text-white hover:text-[#F5AE30]"
+                }`}
+            >
               <Heart size={17} />
               Wishlist
               {favorites.length > 0 && (
@@ -46,14 +76,27 @@ export default function Navbar() {
               )}
             </Link>
           )}
-          {isLoggedIn && isVendor && <Link href="/subscription">Subscription</Link>}
+
+          {isLoggedIn && isVendor && (
+            <Link
+              href="/subscription"
+              aria-current={isActive("/subscription") ? "page" : undefined}
+              className={`relative py-2 transition-colors ${isActive("/subscription")
+                ? "text-[#F5AE30] after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-[#F5AE30]"
+                : "text-white hover:text-[#F5AE30]"
+                }`}
+            >
+              Subscription
+            </Link>
+          )}
         </nav>
+
 
         <div className="flex gap-3 items-center">
           {isLoggedIn ? (
             <>
               {isVendor ? (
-               
+
                 <Link href="/vendor/dashboard">
                   <button className="w-10 h-10 rounded-full border-2 border-purple-500 bg-white text-xl flex items-center justify-center hover:bg-purple-50 transition duration-200">
                     👤
@@ -107,30 +150,45 @@ export default function Navbar() {
             <Link
               href="/"
               onClick={() => setMobileMenuOpen(false)}
-              className="rounded-lg px-3 py-2.5 hover:bg-white/10"
+              className={`rounded-lg px-3 py-2.5 border-l-2 transition-colors ${isActive("/")
+                ? "border-[#F5AE30] bg-white/10 text-[#F5AE30]"
+                : "border-transparent text-white hover:bg-white/10"
+                }`}
             >
               Home
             </Link>
             <Link
               href="/gallery"
               onClick={() => setMobileMenuOpen(false)}
-              className="rounded-lg px-3 py-2.5 hover:bg-white/10"
+              className={`rounded-lg px-3 py-2.5 border-l-2 transition-colors ${isActive("/gallery")
+                ? "border-[#F5AE30] bg-white/10 text-[#F5AE30]"
+                : "border-transparent text-white hover:bg-white/10"
+                }`}
             >
               Gallery
             </Link>
             <Link
               href="/vendors"
               onClick={() => setMobileMenuOpen(false)}
-              className="rounded-lg px-3 py-2.5 hover:bg-white/10"
+              className={`rounded-lg px-3 py-2.5 border-l-2 transition-colors ${isActive("/vendors")
+                ? "border-[#F5AE30] bg-white/10 text-[#F5AE30]"
+                : "border-transparent text-white hover:bg-white/10"
+                }`}
             >
               Vendors
             </Link>
+
             {isLoggedIn && !isVendor && (
               <Link
                 href="/wishlist"
                 onClick={() => setMobileMenuOpen(false)}
-                className="flex items-center gap-2 rounded-lg px-3 py-2.5 hover:bg-white/10"
+                aria-current={isActive("/wishlist") ? "page" : undefined}
+                className={`flex items-center gap-2 rounded-lg px-3 py-2.5 border-l-2 transition-colors ${isActive("/wishlist")
+                    ? "border-[#F5AE30] bg-white/10 text-[#F5AE30]"
+                    : "border-transparent text-white hover:bg-white/10"
+                  }`}
               >
+                <Heart size={17} />
                 Wishlist
                 {favorites.length > 0 && (
                   <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#F5AE30] px-1 text-xs font-bold text-[#081225]">
@@ -139,12 +197,16 @@ export default function Navbar() {
                 )}
               </Link>
             )}
-            
+
+
             {isLoggedIn && isVendor && (
               <Link
                 href="/subscription"
                 onClick={() => setMobileMenuOpen(false)}
-                className="rounded-lg px-3 py-2.5 hover:bg-white/10"
+                className={`rounded-lg px-3 py-2.5 border-l-2 transition-colors ${isActive("/subscription")
+                  ? "border-[#F5AE30] bg-white/10 text-[#F5AE30]"
+                  : "border-transparent text-white hover:bg-white/10"
+                  }`}
               >
                 Subscription
               </Link>
@@ -155,4 +217,4 @@ export default function Navbar() {
     </header>
   );
 }
-  
+
