@@ -20,6 +20,7 @@ from subscriptions.services import (
     change_subscription_plan,
     activate_paid_subscription,
     expire_old_subscriptions,
+    get_subscription_access_cutoff,
 )
 
 
@@ -109,12 +110,32 @@ class SubscriptionServiceTests(TestCase):
         )
 
     def test_expired_subscription_falls_back_to_free(self):
-        self.create_subscription(
+        subscription = self.create_subscription(
             self.standard,
-            expires_at=timezone.now() - timedelta(minutes=1),
+            expires_at=timezone.now() - timedelta(days=2),
         )
 
-        self.assertEqual(get_effective_plan(self.vendor), self.free)
+        self.assertEqual(
+            get_effective_plan(self.vendor),
+            self.free,
+        )
+
+
+    def test_expiry_job_marks_expired_subscriptions(self):
+        subscription = self.create_subscription(
+            self.standard,
+            expires_at=timezone.now() - timedelta(days=2),
+        )
+
+        expire_old_subscriptions()
+
+        subscription.refresh_from_db()
+
+        self.assertEqual(
+            subscription.status,
+            VendorSubscription.Status.EXPIRED,
+        )
+    
 
     def test_advanced_plan_has_unlimited_product_limit(self):
         self.create_subscription(self.advanced)
@@ -123,20 +144,7 @@ class SubscriptionServiceTests(TestCase):
         self.assertTrue(vendor_has_feature(self.vendor, "ai_tools"))
         self.assertTrue(vendor_has_feature(self.vendor, "bazaar_choice"))
 
-    def test_expiry_job_marks_expired_subscriptions(self):
-        subscription = self.create_subscription(
-            self.standard,
-            expires_at=timezone.now() - timedelta(minutes=1),
-        )
-
-        expire_old_subscriptions()
-
-        subscription.refresh_from_db()
-        self.assertEqual(
-            subscription.status,
-            VendorSubscription.Status.EXPIRED,
-        )
-
+    
     def test_selecting_paid_plan_creates_pending_request(self):
         subscription = change_subscription_plan(
             self.vendor,
@@ -230,6 +238,69 @@ class SubscriptionServiceTests(TestCase):
     def test_unknown_feature_is_rejected(self):
         with self.assertRaises(ValueError):
             vendor_has_feature(self.vendor, "made_up_feature")
+    
+
+    def test_subscription_access_is_valid_one_second_before_noon(self):
+        from datetime import timedelta
+        from subscriptions.services import is_subscription_access_valid
+
+        expires_at = timezone.now() - timedelta(days=1)
+        subscription = self.create_subscription(
+            self.standard,
+            expires_at=expires_at,
+        )
+
+        # Ensure the subscription had already started at the simulated time.
+        subscription.starts_at = expires_at - timedelta(days=30)
+        subscription.save(update_fields=["starts_at"])
+
+        cutoff = get_subscription_access_cutoff(expires_at)
+        before_cutoff = cutoff - timedelta(seconds=1)
+
+        self.assertTrue(
+            is_subscription_access_valid(subscription, before_cutoff)
+        )
+
+    def test_subscription_access_expires_exactly_at_noon(self):
+        from datetime import timedelta
+        from subscriptions.services import is_subscription_access_valid
+
+        expires_at = timezone.now() - timedelta(days=1)
+        subscription = self.create_subscription(
+            self.standard,
+            expires_at=expires_at,
+        )
+
+        cutoff = get_subscription_access_cutoff(expires_at)
+
+        self.assertFalse(
+            is_subscription_access_valid(subscription, cutoff)
+        )
+
+
+    def test_expiry_job_does_not_expire_subscription_before_noon(self):
+        from unittest.mock import patch
+        from subscriptions.services import get_subscription_access_cutoff
+
+        expires_at = timezone.now() - timedelta(days=1)
+        subscription = self.create_subscription(
+            self.standard,
+            expires_at=expires_at,
+        )
+
+        cutoff = get_subscription_access_cutoff(expires_at)
+
+        with patch("subscriptions.services.timezone.now", return_value=cutoff - timedelta(seconds=1)):
+            expire_old_subscriptions()
+
+        subscription.refresh_from_db()
+        self.assertEqual(subscription.status, VendorSubscription.Status.ACTIVE)
+
+        with patch("subscriptions.services.timezone.now", return_value=cutoff):
+            expire_old_subscriptions()
+
+        subscription.refresh_from_db()
+        self.assertEqual(subscription.status, VendorSubscription.Status.EXPIRED)
 
 
 class SubscriptionAPITests(APITestCase):

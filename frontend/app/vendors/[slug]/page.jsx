@@ -7,7 +7,7 @@ import { ArrowLeft, ArrowUpRight, BadgeCheck, MapPin, Package, Search, Users } f
 import Navbar from "@/app/components/layout/Navbar";
 import Footer from "@/app/components/home/Footer";
 import { getPublicVendorBySlug } from "@/lib/vendorApi";
-import { getVendorStoreData } from "@/app/data/vendorStoreData";
+// import { getVendorStoreData } from "@/app/data/vendorStoreData";
 import { getLocalVendorImage } from "@/app/data/vendorImages";
 
 const categoryEmojis = {

@@ -46,7 +46,6 @@ export default function Navbar() {
               )}
             </Link>
           )}
-          {isLoggedIn && isVendor && <Link href="/reviews">Community</Link>}
           {isLoggedIn && isVendor && <Link href="/subscription">Subscription</Link>}
         </nav>
 

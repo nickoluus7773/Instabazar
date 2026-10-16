@@ -1,4 +1,5 @@
-from datetime import timedelta
+
+from datetime import datetime, time, timedelta
 
 from django.db import models, transaction
 from django.utils import timezone
@@ -19,30 +20,86 @@ def get_free_plan():
         ) from exc
 
 
+def get_subscription_access_cutoff(expires_at):
+    """
+    Return the exact time when subscription benefits stop.
+
+    Benefits remain available until 12:00 PM on the calendar
+    day following the expires_at date, using Django's current timezone.
+
+    Example:
+        expires_at: February 1
+        access cutoff: February 2 at 12:00 PM
+    """
+    if expires_at is None:
+        return None
+
+    local_expiry = timezone.localtime(expires_at)
+    cutoff_date = local_expiry.date() + timedelta(days=1)
+
+    cutoff_naive = datetime.combine(
+        cutoff_date,
+        time(hour=12, minute=0),
+    )
+
+    return timezone.make_aware(
+        cutoff_naive,
+        timezone.get_current_timezone(),
+    )
+
+
+def is_subscription_access_valid(subscription, now=None):
+    """
+    Check whether a subscription currently grants its plan benefits.
+    """
+    if now is None:
+        now = timezone.now()
+
+    if subscription.status != VendorSubscription.Status.ACTIVE:
+        return False
+
+    if subscription.starts_at and subscription.starts_at > now:
+        return False
+
+    if not subscription.plan.is_active:
+        return False
+
+    cutoff = get_subscription_access_cutoff(subscription.expires_at)
+
+    return cutoff is None or now < cutoff
+
+
 def get_current_subscription(vendor):
+    """
+    Return the newest subscription that currently grants benefits.
+
+    The grace-period cutoff is enforced here, independently of
+    the scheduled expiry command.
+    """
     now = timezone.now()
 
-    return (
+    subscriptions = (
         VendorSubscription.objects.filter(
             vendor=vendor,
             status=VendorSubscription.Status.ACTIVE,
             starts_at__lte=now,
+            plan__is_active=True,
         )
-        .filter(
-            models.Q(expires_at__isnull=True)
-            | models.Q(expires_at__gt=now)
-        )
-        .filter(plan__is_active=True)
         .select_related("plan")
         .order_by("-created_at", "-pk")
-        .first()
     )
+
+    for subscription in subscriptions:
+        if is_subscription_access_valid(subscription, now):
+            return subscription
+
+    return None
 
 
 def get_effective_plan(vendor):
     subscription = get_current_subscription(vendor)
 
-    if subscription and subscription.plan.is_active:
+    if subscription:
         return subscription.plan
 
     return get_free_plan()
@@ -75,7 +132,6 @@ def can_add_product(vendor):
     return vendor.products.count() < limit
 
 
-
 @transaction.atomic
 def change_subscription_plan(vendor, plan_code):
     # Serialize plan-change requests for this vendor.
@@ -95,14 +151,13 @@ def change_subscription_plan(vendor, plan_code):
 
     # Free is the fallback plan. Selecting it again should be harmless.
     if plan.code == SubscriptionPlan.PlanCode.FREE:
-        # Do not cancel an active paid subscription prematurely.
+        # Do not cancel a paid subscription while it still grants benefits.
         if current and current.plan.monthly_price > 0:
             raise ValueError(
                 "Your paid subscription remains active until it expires."
             )
 
-        # Cancel outstanding paid-plan requests so they cannot later
-        # replace the vendor's explicit choice of Free.
+        # Cancel outstanding requests so they cannot later replace Free.
         VendorSubscription.objects.filter(
             vendor=vendor,
             status=VendorSubscription.Status.PENDING,
@@ -150,17 +205,17 @@ def activate_paid_subscription(subscription, payment_reference):
     """
     Internal operation only.
 
-    Call this only after a trusted payment-provider verification.
+    Call this only after trusted payment-provider verification.
     Never expose it through an unauthenticated or user-controlled endpoint.
     """
     if not payment_reference or not payment_reference.strip():
         raise ValueError("A verified payment reference is required.")
 
-    # Lock the vendor first in both plan selection and activation to maintain
-    # a consistent lock order for concurrent subscription operations.
+    # Lock the vendor first to maintain a consistent lock order.
     vendor_id = VendorSubscription.objects.values_list(
         "vendor_id", flat=True
     ).get(pk=subscription.pk)
+
     Vendor.objects.select_for_update().get(pk=vendor_id)
 
     subscription = (
@@ -178,14 +233,16 @@ def activate_paid_subscription(subscription, payment_reference):
     if subscription.plan.monthly_price <= 0:
         raise ValueError("Only paid plans can be activated here.")
 
+    payment_reference = payment_reference.strip()
+
     if VendorSubscription.objects.filter(
-        payment_reference=payment_reference.strip()
+        payment_reference=payment_reference
     ).exclude(pk=subscription.pk).exists():
         raise ValueError("This payment reference has already been used.")
 
     now = timezone.now()
 
-    # Prevent multiple overlapping active subscriptions.
+    # Cancel other active subscriptions for this vendor.
     VendorSubscription.objects.filter(
         vendor_id=subscription.vendor_id,
         status=VendorSubscription.Status.ACTIVE,
@@ -196,7 +253,8 @@ def activate_paid_subscription(subscription, payment_reference):
     subscription.status = VendorSubscription.Status.ACTIVE
     subscription.starts_at = now
     subscription.expires_at = now + timedelta(days=30)
-    subscription.payment_reference = payment_reference.strip()
+    subscription.payment_reference = payment_reference
+
     subscription.save(
         update_fields=[
             "status",
@@ -211,10 +269,34 @@ def activate_paid_subscription(subscription, payment_reference):
 
 
 def expire_old_subscriptions():
+    """
+    Mark active subscriptions expired once their grace period ends.
+
+    The same cutoff helper is used by access checks and this command,
+    so scheduling delays cannot extend paid access beyond the cutoff.
+    """
     now = timezone.now()
 
-    return VendorSubscription.objects.filter(
+    active_subscriptions = VendorSubscription.objects.filter(
         status=VendorSubscription.Status.ACTIVE,
         expires_at__isnull=False,
-        expires_at__lte=now,
-    ).update(status=VendorSubscription.Status.EXPIRED)
+    ).only(
+        "pk",
+        "expires_at",
+    )
+
+    expired_ids = [
+        subscription.pk
+        for subscription in active_subscriptions.iterator()
+        if get_subscription_access_cutoff(subscription.expires_at) <= now
+    ]
+
+    if not expired_ids:
+        return 0
+
+    return VendorSubscription.objects.filter(
+        pk__in=expired_ids,
+        status=VendorSubscription.Status.ACTIVE,
+    ).update(
+        status=VendorSubscription.Status.EXPIRED
+    )

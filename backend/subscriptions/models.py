@@ -88,6 +88,12 @@ class VendorSubscription(models.Model):
         max_length=255,
         blank=True,
     )
+    razorpay_order_id = models.CharField(
+    max_length=100,
+    unique=True,
+    null=True,
+    blank=True, 
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

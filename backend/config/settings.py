@@ -122,7 +122,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
 
 USE_I18N = True
 
@@ -149,3 +149,6 @@ SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
 }
+
+RAZORPAY_KEY_ID = os.getenv("RAZORPAY_KEY_ID", "")
+RAZORPAY_KEY_SECRET = os.getenv("RAZORPAY_KEY_SECRET", "")

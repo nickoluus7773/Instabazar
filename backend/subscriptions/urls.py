@@ -5,6 +5,8 @@ from subscriptions.views import (
     CurrentSubscriptionView,
     SubscriptionHistoryView,
     SubscribeView,
+     CreatePaymentOrderView,
+    VerifyPaymentView,
 )
 
 urlpatterns = [
@@ -12,4 +14,14 @@ urlpatterns = [
     path("current/", CurrentSubscriptionView.as_view(), name="subscription-current"),
     path("history/", SubscriptionHistoryView.as_view(), name="subscription-history"),
     path("subscribe/", SubscribeView.as_view(), name="subscription-create"),
+    path(
+    "payment/create-order/",
+    CreatePaymentOrderView.as_view(),
+    name="subscription-payment-create-order",
+),
+path(
+    "payment/verify/",
+    VerifyPaymentView.as_view(),
+    name="subscription-payment-verify",
+),
 ]
