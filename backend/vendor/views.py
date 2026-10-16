@@ -470,3 +470,4 @@ def public_vendor_instagram_redirect(request, store_slug):
         )
 
     return redirect(f"https://www.instagram.com/{handle}/")
+    
