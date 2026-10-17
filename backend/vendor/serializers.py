@@ -1,10 +1,14 @@
 from rest_framework import serializers
-from .models import Vendor
+from .models import Vendor, VendorFollow
 from products.models import Product
+from subscriptions.services import vendor_can_be_followed
 
 
 class VendorSerializer(serializers.ModelSerializer):
     product_count = serializers.IntegerField(read_only=True)
+    follower_count = serializers.SerializerMethodField()
+    follow_eligible = serializers.SerializerMethodField()
+    is_following = serializers.SerializerMethodField()
     logo_url = serializers.SerializerMethodField()
     profile_image = serializers.ImageField(required=False, allow_null=True, write_only=True)
 
@@ -14,6 +18,18 @@ class VendorSerializer(serializers.ModelSerializer):
             image_url = obj.profile_image.url
             return request.build_absolute_uri(image_url) if request else image_url
         return obj.logo_url
+
+    def get_follow_eligible(self, obj):
+        return vendor_can_be_followed(obj)
+
+    def get_is_following(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated or hasattr(request.user, "vendor_profile"):
+            return False
+        return VendorFollow.objects.filter(customer=request.user, vendor=obj).exists()
+
+    def get_follower_count(self, obj):
+        return VendorFollow.objects.filter(vendor=obj, customer__vendor_profile__isnull=True).count()
 
     class Meta:
         model = Vendor
@@ -29,6 +45,8 @@ class VendorSerializer(serializers.ModelSerializer):
             'profile_image',
             'subscription_plan',
             'product_count',
+            'follow_eligible',
+            'is_following',
             'created_at',
             'updated_at',
         ]
@@ -71,6 +89,9 @@ class VendorProductSerializer(serializers.ModelSerializer):
 
 class VendorDetailSerializer(serializers.ModelSerializer):
     product_count = serializers.IntegerField(read_only=True)
+    follower_count = serializers.SerializerMethodField()
+    follow_eligible = serializers.SerializerMethodField()
+    is_following = serializers.SerializerMethodField()
     products = VendorProductSerializer(many=True, read_only=True)
     logo_url = serializers.SerializerMethodField()
     profile_image = serializers.ImageField(required=False, allow_null=True, write_only=True)
@@ -81,6 +102,18 @@ class VendorDetailSerializer(serializers.ModelSerializer):
             image_url = obj.profile_image.url
             return request.build_absolute_uri(image_url) if request else image_url
         return obj.logo_url
+
+    def get_follow_eligible(self, obj):
+        return vendor_can_be_followed(obj)
+
+    def get_is_following(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated or hasattr(request.user, "vendor_profile"):
+            return False
+        return VendorFollow.objects.filter(customer=request.user, vendor=obj).exists()
+
+    def get_follower_count(self, obj):
+        return VendorFollow.objects.filter(vendor=obj, customer__vendor_profile__isnull=True).count()
 
     class Meta:
         model = Vendor
@@ -98,6 +131,8 @@ class VendorDetailSerializer(serializers.ModelSerializer):
             'subscription_plan',
             'product_count',
             'products',
+            'follow_eligible',
+            'is_following',
             'created_at',
             'updated_at',
         ]

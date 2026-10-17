@@ -10,10 +10,13 @@ export function AuthProvider({ children }) {
   const router = useRouter();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isVendor, setIsVendor] = useState(false);
+  const [roleResolved, setRoleResolved] = useState(false);
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
-      setIsLoggedIn(Boolean(localStorage.getItem("accessToken")));
+      const hasToken = Boolean(localStorage.getItem("accessToken"));
+      setIsLoggedIn(hasToken);
+      if (!hasToken) setRoleResolved(true);
     }, 0);
     return () => window.clearTimeout(timer);
   }, []);
@@ -30,8 +33,10 @@ export function AuthProvider({ children }) {
     const token = localStorage.getItem("accessToken");
 
     if (!token) {
+      const timer = window.setTimeout(() => setRoleResolved(true), 0);
       return () => {
         cancelled = true;
+        window.clearTimeout(timer);
       };
     }
 
@@ -41,15 +46,12 @@ export function AuthProvider({ children }) {
       },
     })
       .then((response) => {
-        if (!cancelled) {
+        if (!cancelled && (response.ok || response.status === 404)) {
           setIsVendor(response.ok);
+          setRoleResolved(true);
         }
       })
-      .catch(() => {
-        if (!cancelled) {
-          setIsVendor(false);
-        }
-      });
+      .catch(() => {});
 
     return () => {
       cancelled = true;
@@ -59,12 +61,14 @@ export function AuthProvider({ children }) {
   const login = (token) => {
     localStorage.setItem("accessToken", token);
     setIsLoggedIn(true);
+    setRoleResolved(false);
   };
 
   const logout = () => {
     localStorage.removeItem("accessToken");
     setIsLoggedIn(false);
     setIsVendor(false);
+    setRoleResolved(true);
     router.push("/");
   };
 
@@ -73,6 +77,7 @@ export function AuthProvider({ children }) {
       value={{
         isLoggedIn,
         isVendor,
+        roleResolved,
         login,
         logout,
       }}

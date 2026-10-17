@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowUpRight, BadgeCheck, MapPin, Package, Users } from "lucide-react";
 import { getLocalVendorImage } from "@/app/data/vendorImages";
+import FollowButton from "@/app/components/vendors/FollowButton";
+import { useAuth } from "@/context/AuthContext";
 
 const fallbackColors = [
   "from-orange-100 via-rose-100 to-fuchsia-100",
@@ -13,10 +15,12 @@ const fallbackColors = [
 ];
 
 export default function VendorCard({ vendor, index = 0 }) {
+  const { isLoggedIn, isVendor, roleResolved } = useAuth();
   const [imageFailed, setImageFailed] = useState(false);
   const businessName = vendor.business_name || "Independent store";
   const imageSource = getLocalVendorImage(vendor) || vendor.logo_url;
   const fallbackClass = fallbackColors[index % fallbackColors.length];
+  const showFollow = isLoggedIn && roleResolved && !isVendor && vendor.follow_eligible;
 
   return (
     <article className="group overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-[0_12px_35px_rgba(15,23,42,0.06)] transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_20px_45px_rgba(15,23,42,0.12)]">
@@ -51,7 +55,10 @@ export default function VendorCard({ vendor, index = 0 }) {
           <span className="inline-flex items-center gap-1.5"><Users size={15} className="text-fuchsia-500" /> {vendor.follower_count ?? 0} followers</span>
           <span className="inline-flex items-center gap-1.5"><Package size={15} className="text-orange-500" /> {vendor.product_count ?? 0} products</span>
         </div>
-        <Link href={`/vendors/${vendor.store_slug}`} className="mt-5 flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white transition hover:bg-fuchsia-600">Explore shop <ArrowUpRight size={16} /></Link>
+        <div className={`mt-5 ${showFollow ? "grid grid-cols-2 gap-2" : ""}`}>
+          <Link href={`/vendors/${vendor.store_slug}`} className="flex h-11 items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white transition hover:bg-fuchsia-600">Explore shop <ArrowUpRight size={16} /></Link>
+          {showFollow && <FollowButton vendor={vendor} />}
+        </div>
       </div>
     </article>
   );

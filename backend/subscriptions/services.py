@@ -96,6 +96,20 @@ def get_current_subscription(vendor):
     return None
 
 
+def vendor_can_be_followed(vendor):
+    """Following is available only while a paid Standard/Advanced plan grants access."""
+    if vendor.verification_status != "verified":
+        return False
+    subscription = get_current_subscription(vendor)
+    return bool(
+        subscription
+        and subscription.plan.code in {
+            SubscriptionPlan.PlanCode.STANDARD,
+            SubscriptionPlan.PlanCode.ADVANCED,
+        }
+    )
+
+
 def get_effective_plan(vendor):
     subscription = get_current_subscription(vendor)
 

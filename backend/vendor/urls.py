@@ -5,11 +5,16 @@ from .views import (
     PublicVendorListView,
     PublicVendorDetailView,
 )
+from .follow_api import customer_follows, customer_unfollow, personal_feed, vendor_followers
 
 router = DefaultRouter()
 router.register(r'', VendorViewSet, basename='vendor')
 
 urlpatterns = [
+    path("follows/", customer_follows, name="customer-follows"),
+    path("follows/<int:vendor_id>/", customer_unfollow, name="customer-unfollow"),
+    path("feed/", personal_feed, name="customer-personal-feed"),
+    path("followers/", vendor_followers, name="vendor-followers"),
     # Public endpoints
     path(
         "public/",

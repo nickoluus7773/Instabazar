@@ -117,3 +117,26 @@ class Vendor(models.Model):
 
     def __str__(self):
         return f"{self.business_name}"
+
+
+class VendorFollow(models.Model):
+    customer = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="vendor_follows",
+    )
+    vendor = models.ForeignKey(
+        Vendor,
+        on_delete=models.CASCADE,
+        related_name="customer_follows",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["customer", "vendor"],
+                name="unique_customer_vendor_follow",
+            )
+        ]
+        ordering = ["-created_at"]

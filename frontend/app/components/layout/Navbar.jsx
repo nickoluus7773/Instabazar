@@ -1,14 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Heart, Menu, X } from "lucide-react";
+import { Heart, Menu, Rss, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useFavorites } from "@/context/FavoritesContext";
 import { useEffect, useState, useRef } from "react";
 import { usePathname } from "next/navigation";
 
 export default function Navbar() {
-  const { isLoggedIn, isVendor, logout } = useAuth();
+  const { isLoggedIn, isVendor, roleResolved, logout } = useAuth();
   const { favorites } = useFavorites();
   const pathname = usePathname();
 
@@ -74,6 +74,13 @@ export default function Navbar() {
                   {favorites.length}
                 </span>
               )}
+            </Link>
+          )}
+
+          {isLoggedIn && roleResolved && !isVendor && (
+            <Link href="/feed" aria-current={isActive("/feed") ? "page" : undefined}
+              className={`relative flex items-center gap-2 py-2 transition-colors ${isActive("/feed") ? "text-[#F5AE30]" : "text-white hover:text-[#F5AE30]"}`}>
+              <Rss size={16} /> Following Feed
             </Link>
           )}
 
@@ -195,6 +202,13 @@ export default function Navbar() {
                     {favorites.length}
                   </span>
                 )}
+              </Link>
+            )}
+
+            {isLoggedIn && roleResolved && !isVendor && (
+              <Link href="/feed" onClick={() => setMobileMenuOpen(false)}
+                className={`flex items-center gap-2 rounded-lg px-3 py-2.5 border-l-2 transition-colors ${isActive("/feed") ? "border-[#F5AE30] bg-white/10 text-[#F5AE30]" : "border-transparent text-white hover:bg-white/10"}`}>
+                <Rss size={16} /> Following Feed
               </Link>
             )}
 

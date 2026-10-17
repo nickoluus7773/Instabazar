@@ -23,6 +23,7 @@ import {
   AlertCircle,
   ChevronRight,
   LoaderCircle,
+  Users,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -34,6 +35,7 @@ import {
 import API_BASE_URL from "@/lib/api";
 import ApprovalStatus from "@/app/components/vendor/ApprovalStatus";
 import Navbar from "@/app/components/layout/Navbar";
+import { getVendorFollowers } from "@/lib/followApi";
 
 const navigation = [
   { label: "Overview", href: "/vendor/dashboard", icon: LayoutDashboard },
@@ -44,6 +46,7 @@ const navigation = [
     icon: Heart,
   },
   { label: "Store Profile", href: "/vendor/profile", icon: Store },
+  { label: "Followers", href: "/vendor/dashboard#followers", icon: Users },
   { label: "Subscription", href: "/vendor/subscription", icon: CreditCard },
 ];
 
@@ -163,6 +166,44 @@ function MetricCard({ icon: Icon, label, value, detail, accent = "violet" }) {
       {detail && <p className="mt-3 text-xs leading-5 text-slate-500">{detail}</p>}
     </Panel>
   );
+}
+
+function FollowersSection() {
+  const [data, setData] = useState(null);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const load = useCallback(async (nextPage = 1) => {
+    setLoading(true);
+    setError("");
+    try {
+      const result = await getVendorFollowers(localStorage.getItem("accessToken"), nextPage);
+      setData(result);
+      setPage(nextPage);
+    } catch (cause) {
+      setError(cause.message || "Could not load followers.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+  useEffect(() => {
+    const timer = window.setTimeout(() => load(), 0);
+    return () => window.clearTimeout(timer);
+  }, [load]);
+  const followers = data?.results || [];
+  return <div id="followers" className="scroll-mt-6">
+    <SectionHeading eyebrow="Your community" title="Vendor followers" description="Customers following your storefront." />
+    <Panel className="p-5 sm:p-6">
+      <p className="text-sm text-slate-400">Current followers</p>
+      <p className="mt-2 text-3xl font-semibold text-white">{data?.count ?? (loading ? "…" : 0)}</p>
+      {!loading && data?.eligible === false && <p className="mt-3 text-sm text-amber-300">Follower access is available while your Standard or Advanced subscription is active.</p>}
+      {error && <p role="alert" className="mt-3 text-sm text-rose-300">{error} <button onClick={() => load(page)} className="underline">Retry</button></p>}
+      {loading ? <p className="mt-5 text-sm text-slate-400">Loading followers…</p> : followers.length ? <div className="mt-5 divide-y divide-white/[0.07]">
+        {followers.map((follower) => <div key={follower.id} className="flex items-center justify-between gap-3 py-3"><span className="font-medium text-slate-200">{follower.username}</span><span className="text-xs text-slate-500">{new Date(follower.followed_at).toLocaleDateString()}</span></div>)}
+      </div> : !error && <p className="mt-5 text-sm text-slate-400">No followers to show yet.</p>}
+      {!loading && (data?.previous || data?.next) && <div className="mt-4 flex justify-between"><button disabled={!data.previous} onClick={() => load(page - 1)} className="text-sm text-violet-300 disabled:opacity-40">Previous</button><button disabled={!data.next} onClick={() => load(page + 1)} className="text-sm text-violet-300 disabled:opacity-40">Next</button></div>}
+    </Panel>
+  </div>;
 }
 
 export default function VendorDashboard() {
@@ -304,9 +345,10 @@ export default function VendorDashboard() {
   }, [router]);
 
   useEffect(() => {
-    fetchDashboardData();
+    const timer = window.setTimeout(() => fetchDashboardData(), 0);
 
     // Re-fetch if the vendor returns to this dashboard.
+    return () => window.clearTimeout(timer);
   }, [fetchDashboardData]);
 
   useEffect(() => {
@@ -936,6 +978,8 @@ export default function VendorDashboard() {
                   </div>
                 )}
               </div>
+
+              <FollowersSection />
 
               {/* Quick actions */}
               <div>

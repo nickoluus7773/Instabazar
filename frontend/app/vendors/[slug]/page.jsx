@@ -9,6 +9,7 @@ import Footer from "@/app/components/home/Footer";
 import { getPublicVendorBySlug } from "@/lib/vendorApi";
 // import { getVendorStoreData } from "@/app/data/vendorStoreData";
 import { getLocalVendorImage } from "@/app/data/vendorImages";
+import FollowButton from "@/app/components/vendors/FollowButton";
 
 const categoryEmojis = {
   "Fashion & Accessories": "👗",
@@ -127,7 +128,7 @@ export default function VendorDetailPage() {
                   <div className="mb-3 flex flex-wrap items-center gap-3"><span className="rounded-full bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-fuchsia-200">{categoryName}</span>{vendor.verification_status === "verified" && <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-300"><BadgeCheck size={15} /> Verified store</span>}</div>
                   <h1 className="text-4xl font-black tracking-tight sm:text-6xl">{vendor.business_name}</h1>
                   <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">{vendor.bio || "A curated collection from an independent creator."}</p>
-                  <div className="mt-5 flex flex-wrap gap-5 text-sm font-semibold text-slate-300"><span className="inline-flex items-center gap-2"><MapPin size={16} className="text-orange-300" /> {vendor.location || "Independent seller"}</span><span className="inline-flex items-center gap-2"><Users size={16} className="text-fuchsia-300" /> {vendor.follower_count || 0} followers</span><span className="inline-flex items-center gap-2"><Package size={16} className="text-sky-300" /> {vendor.product_count || products.length} products</span></div>
+                  <div className="mt-5 flex flex-wrap items-center gap-5 text-sm font-semibold text-slate-300"><span className="inline-flex items-center gap-2"><MapPin size={16} className="text-orange-300" /> {vendor.location || "Independent seller"}</span><span className="inline-flex items-center gap-2"><Users size={16} className="text-fuchsia-300" /> {vendor.follower_count || 0} followers</span><span className="inline-flex items-center gap-2"><Package size={16} className="text-sky-300" /> {vendor.product_count || products.length} products</span><FollowButton vendor={vendor} /></div>
                 </div>
               </div>
               <div className="hidden rounded-2xl border border-white/10 bg-white/10 p-5 text-right backdrop-blur sm:block"><p className="text-xs font-bold uppercase tracking-[0.18em] text-slate-400">Store collection</p><p className="mt-2 text-3xl font-black">{products.length}</p><p className="text-sm text-slate-300">pieces to explore</p></div>

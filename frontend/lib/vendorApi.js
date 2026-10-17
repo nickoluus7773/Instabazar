@@ -3,12 +3,14 @@ import API_BASE_URL from "@/lib/api";
 // PUBLIC VENDOR LIST
 export const getPublicVendors = async () => {
   try {
+    const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
     const response = await fetch(
       `${API_BASE_URL}/api/vendor/public/`,
       {
         method: "GET",
         headers: {
           "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       }
     );
@@ -223,9 +225,13 @@ export const deleteProduct = async (token, productId) => {
 };
 export const getPublicVendorBySlug = async (slug) => {
   try {
+    const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
     const response = await fetch(`${API_BASE_URL}/api/vendor/public/${slug}/`, {
       method: "GET",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
     });
     if (!response.ok) {
       throw new Error(`Error: ${response.status}`);

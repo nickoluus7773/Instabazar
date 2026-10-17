@@ -3,7 +3,7 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from django.db.models import Count, Q
+from django.db.models import Count, Q, Prefetch
 from decimal import Decimal, InvalidOperation
 from .models import Vendor
 from .serializers import VendorSerializer, VendorDetailSerializer
@@ -71,9 +71,12 @@ class PublicVendorListView(viewsets.ReadOnlyModelViewSet):
     lookup_field = "store_slug"
 
     def get_queryset(self):
+        products = Product.objects.filter(is_active=True).select_related("category")
         return Vendor.objects.filter(
             verification_status="verified"
-        ).annotate(product_count=Count("products"))
+        ).annotate(
+            product_count=Count("products", filter=Q(products__is_active=True))
+        ).prefetch_related(Prefetch("products", queryset=products))
 
 
 class PublicVendorDetailView(PublicVendorListView):
