@@ -4,9 +4,9 @@
 import { useState, useEffect } from "react";
 import { getVendorProfile, updateVendorProfile } from "@/lib/vendorApi";
 import { useAuth } from "@/context/AuthContext";
+import { FaInstagram } from "react-icons/fa";
 import {
   Store,
-  Instagram,
   MapPin,
   Users,
   ShieldCheck,
@@ -519,7 +519,7 @@ export default function VendorProfile() {
                 value={profile.business_name}
               />
               <InfoCard
-                icon={Instagram}
+                icon={FaInstagram}
                 label="Instagram handle"
                 value={
                   profile.instagram_handle
