@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, AtSign, BriefcaseBusiness, Check, ShoppingBag, Sparkles } from "lucide-react";
@@ -58,11 +58,15 @@ export default function RegisterExperience({ initialMode = "user" }) {
     bio: "",
     logo_url: "",
     follower_count: "",
-    subscription_plan: "free",
     profile_image: null,
   });
   const [loading, setLoading] = useState(false);
+  const [hasExistingSession, setHasExistingSession] = useState(false);
   const [vendorImagePreview, setVendorImagePreview] = useState("");
+
+  useEffect(() => {
+    setHasExistingSession(Boolean(localStorage.getItem("accessToken")));
+  }, []);
 
   const switchMode = (nextMode) => {
     setMode(nextMode);
@@ -156,7 +160,16 @@ export default function RegisterExperience({ initialMode = "user" }) {
   };
 
   const isVendor = mode === "vendor";
-  const fields = isVendor ? vendorFields : userFields;
+  const fields = isVendor
+    ? hasExistingSession
+      ? vendorFields.filter(
+          (field) =>
+            !["username", "email", "password", "confirmPassword"].includes(
+              field.name
+            )
+        )
+      : vendorFields
+    : userFields;
   const values = isVendor ? vendorForm : userForm;
   const updateForm = isVendor ? updateVendor : updateUser;
 
@@ -211,7 +224,10 @@ export default function RegisterExperience({ initialMode = "user" }) {
                   </div>
                   {isVendor && (
                     <>
-                      <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">Subscription plan</span><select name="subscription_plan" value={vendorForm.subscription_plan} onChange={updateVendor} className="h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm outline-none focus:border-fuchsia-500"><option value="free">Free plan</option><option value="paid">Premium plan</option></select></label>
+                      <div className="rounded-xl border border-fuchsia-100 bg-fuchsia-50 px-4 py-3 text-sm text-slate-700">
+                        Your vendor account starts on the Free plan. You can compare plans and upgrade anytime.
+                        <Link href="/subscription" className="ml-1 font-bold text-fuchsia-700 underline underline-offset-2">Compare plans</Link>
+                      </div>
                       <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">Store bio</span><textarea name="bio" value={vendorForm.bio} onChange={updateVendor} rows="3" placeholder="Tell shoppers what makes your store special" className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none placeholder:text-slate-400 focus:border-fuchsia-500" /></label>
                       <label className="block"><span className="mb-2 block text-sm font-semibold text-slate-700">Logo URL <span className="font-normal text-slate-400">(optional)</span></span><input name="logo_url" value={vendorForm.logo_url} onChange={updateVendor} placeholder="https://..." className="h-12 w-full rounded-xl border border-slate-200 px-4 text-sm outline-none placeholder:text-slate-400 focus:border-fuchsia-500" /></label>
                       <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">

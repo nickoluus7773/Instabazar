@@ -115,7 +115,6 @@ def register_vendor(request):
     logo_url = request.data.get("logo_url", "")
     profile_image = request.FILES.get("profile_image")
     follower_count = request.data.get("follower_count", 0)
-    subscription_plan = request.data.get("subscription_plan", "free")
 
     if not business_name:
         return Response(
@@ -176,7 +175,9 @@ def register_vendor(request):
         logo_url=logo_url or None,
         profile_image=profile_image,
         follower_count=int(follower_count or 0),
-        subscription_plan=subscription_plan if subscription_plan in ["free", "paid"] else "free",
+        # Plan access is managed through VendorSubscription records. New
+        # vendor registrations always begin on the Free plan.
+        subscription_plan="free",
         store_slug=store_slug,
     )
 
