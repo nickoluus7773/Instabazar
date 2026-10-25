@@ -181,7 +181,9 @@ export default function SubscriptionPage() {
         return (
           matchingCurrentPlan?.code ??
           sortedPlans.find(
-            (plan) => String(plan.code).toLowerCase() === "standard"
+            (plan) =>
+              String(plan.code).toLowerCase() ===
+              (isVendor ? "standard" : "free")
           )?.code ??
           sortedPlans[0]?.code ??
           ""
@@ -200,10 +202,12 @@ export default function SubscriptionPage() {
 
   const selectedPlan = plans.find((plan) => plan.code === selectedCode);
 
-  const currentPlanCode = String(currentPlan?.code ?? "free").toLowerCase();
+  const currentPlanCode = String(currentPlan?.code ?? "").toLowerCase();
   const selectedPlanCode = String(selectedPlan?.code ?? "").toLowerCase();
 
-  const isCurrentPlan = selectedPlanCode === currentPlanCode;
+  const isCurrentPlan = Boolean(
+    isVendor && currentPlan && selectedPlanCode === currentPlanCode
+  );
   const isFreePlan = Number(selectedPlan?.monthly_price) === 0;
 
   async function handleContinue() {
@@ -213,15 +217,12 @@ export default function SubscriptionPage() {
     setError("");
 
     if (!isLoggedIn) {
-      window.location.href = "/login";
+      window.location.href = "/register/vendor";
       return;
     }
 
     if (!isVendor) {
-      setNotice({
-        type: "error",
-        text: "A vendor account is required to choose a subscription plan.",
-      });
+      window.location.href = "/register/vendor";
       return;
     }
 
@@ -390,7 +391,9 @@ export default function SubscriptionPage() {
           </h1>
 
           <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
-            Choose the tools your business needs to grow on InstaBazaar.
+            {isVendor
+              ? "Choose the tools your business needs to grow on InstaBazaar."
+              : "Compare every plan before you register. New vendor accounts start on Free, and you can upgrade anytime."}
           </p>
         </section>
 
@@ -627,6 +630,11 @@ export default function SubscriptionPage() {
                     <>
                       Current plan
                       <Check size={16} />
+                    </>
+                  ) : !isVendor ? (
+                    <>
+                      Create vendor account
+                      <ArrowRight size={16} />
                     </>
                   ) : isFreePlan ? (
                     <>
