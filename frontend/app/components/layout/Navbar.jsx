@@ -44,7 +44,9 @@ export default function Navbar() {
             { href: "/", label: "Home" },
             { href: "/gallery", label: "Gallery" },
             { href: "/vendors", label: "Vendors" },
-            { href: "/subscription", label: isVendor ? "Subscription" : "Plans" },
+            ...(!isLoggedIn || isVendor
+              ? [{ href: "/subscription", label: isVendor ? "Subscription" : "Plans" }]
+              : []),
           ].map((item) => (
             <Link
               key={item.href}
@@ -174,17 +176,19 @@ export default function Navbar() {
               Vendors
             </Link>
 
-            <Link
-              href="/subscription"
-              onClick={() => setMobileMenuOpen(false)}
-              aria-current={isActive("/subscription") ? "page" : undefined}
-              className={`rounded-lg px-3 py-2.5 border-l-2 transition-colors ${isActive("/subscription")
-                ? "border-[#F5AE30] bg-white/10 text-[#F5AE30]"
-                : "border-transparent text-white hover:bg-white/10"
-                }`}
-            >
-              {isVendor ? "Subscription" : "Plans"}
-            </Link>
+            {(!isLoggedIn || isVendor) && (
+              <Link
+                href="/subscription"
+                onClick={() => setMobileMenuOpen(false)}
+                aria-current={isActive("/subscription") ? "page" : undefined}
+                className={`rounded-lg px-3 py-2.5 border-l-2 transition-colors ${isActive("/subscription")
+                  ? "border-[#F5AE30] bg-white/10 text-[#F5AE30]"
+                  : "border-transparent text-white hover:bg-white/10"
+                  }`}
+              >
+                {isVendor ? "Subscription" : "Plans"}
+              </Link>
+            )}
 
             {isLoggedIn && !isVendor && (
               <Link
