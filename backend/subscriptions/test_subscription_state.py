@@ -136,6 +136,7 @@ class ProductSubscriptionLimitTests(APITestCase):
             "productStock": 5,
             "productCondition": "New",
             "category": self.category.categoryName,
+            "instagram_post_url": "https://www.instagram.com/p/test_product_post/",
         }
 
 
@@ -147,6 +148,7 @@ class ProductSubscriptionLimitTests(APITestCase):
             "stock": 5,
             "condition": "New",
             "category": self.category.categoryName,
+            "instagram_post_url": "https://www.instagram.com/p/test_product_post/",
         }
 
 

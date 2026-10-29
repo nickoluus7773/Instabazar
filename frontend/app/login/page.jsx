@@ -42,17 +42,19 @@ export default function LoginPage() {
 
       if (response.ok && data.access) {
         login(data.access);
-        router.push("/");
+        if (data.is_vendor) {
+          router.push("/vendor/dashboard");
+        } else {
+          router.push("/");
+        }
       } else {
         const msg = data.detail || data.error || "Invalid username or password";
         setErrorMessage(msg);
-        alert(msg);
       }
     } catch (error) {
       console.error("Login request failed:", error);
       const msg = `Unable to reach backend at ${API_BASE_URL}. Ensure Django is running on port 8000.`;
       setErrorMessage(msg);
-      alert(msg);
     } finally {
       setLoading(false);
     }
@@ -177,20 +179,20 @@ export default function LoginPage() {
   
                   <form onSubmit={loginUser} className="space-y-5">
   
-                    {/* Username */}
+                    {/* Username or Email */}
                     <div>
                       <label
                         htmlFor="username"
                         className="block text-sm font-medium text-gray-200 mb-2"
                       >
-                        Username
+                        Username or Email
                       </label>
   
                       <div className="relative">
                         <input
                           id="username"
                           type="text"
-                          placeholder="Enter your username"
+                          placeholder="Enter your username or email"
                           value={username}
                           onChange={(e) => setUsername(e.target.value)}
                           required

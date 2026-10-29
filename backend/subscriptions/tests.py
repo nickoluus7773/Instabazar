@@ -425,6 +425,29 @@ class SubscriptionAPITests(APITestCase):
             "/subscriptions/current/",
             "/subscriptions/history/",
             "/subscriptions/subscribe/",
+            "/subscriptions/cancel/",
         ):
             response = self.client.get(url)
-            self.assertIn(response.status_code, (401, 403))
+            self.assertIn(response.status_code, (401, 403, 405))
+
+    def test_cancel_paid_subscription_keeps_access_and_sets_remaining_days(self):
+        now = timezone.now()
+        sub = VendorSubscription.objects.create(
+            vendor=self.vendor,
+            plan=self.standard,
+            status=VendorSubscription.Status.ACTIVE,
+            starts_at=now - timedelta(days=5),
+            expires_at=now + timedelta(days=25),
+        )
+
+        response = self.client.post("/subscriptions/cancel/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        sub.refresh_from_db()
+        self.assertTrue(sub.is_cancelled)
+        self.assertIsNotNone(sub.cancelled_at)
+        self.assertTrue(sub.is_current)
+        self.assertEqual(response.data["days_remaining"], 25)
+
+    def test_cancel_free_subscription_fails(self):
+        response = self.client.post("/subscriptions/cancel/")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

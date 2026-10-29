@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import API_BASE_URL from "@/lib/api";
+import { getImageUrl } from "@/lib/imageHelper";
 
 // Helper to pick N random items from an array
 function getRandomItems(array, n = 4) {
@@ -70,9 +71,7 @@ export default function FeaturedProducts() {
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {featured.map((product) => {
           const image = product.productImage || product.image;
-          const imageSrc = image?.startsWith("http")
-            ? image
-            : `${API_BASE_URL}${image?.startsWith("/") ? "" : "/"}${image || ""}`;
+          const imageSrc = getImageUrl(image);
           const title = product.productTitle || product.title;
           const price = product.productPrice || product.price;
           const categoryName =

@@ -3,33 +3,20 @@ import API_BASE_URL from "@/lib/api";
 // PUBLIC VENDOR LIST
 export const getPublicVendors = async () => {
   try {
-    const token = typeof window !== "undefined" ? localStorage.getItem("accessToken") : null;
-    const response = await fetch(
-      `${API_BASE_URL}/api/vendor/public/`,
-      {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      }
-    );
+    const response = await fetch(`${API_BASE_URL}/api/vendor/public/`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
 
     if (!response.ok) {
-      throw new Error(
-        `Failed to fetch vendors: ${response.status}`
-      );
+      return [];
     }
 
     return await response.json();
-
   } catch (error) {
-    console.error(
-      "Failed to fetch public vendors:",  
-      error
-    );
-
-    throw error;
+    return [];
   }
 };
 
@@ -45,12 +32,17 @@ export const getVendorProfile = async (token) => {
     });
 
     if (!response.ok) {
+      if (response.status === 401 && typeof window !== "undefined") {
+        localStorage.removeItem("accessToken");
+      }
       throw new Error(response.status === 401 ? "Unauthorized" : `Error: ${response.status}`);
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Failed to fetch vendor profile:", error);
+    if (error?.message !== "Unauthorized" && !error?.message?.includes("401")) {
+      console.error("Failed to fetch vendor profile:", error);
+    }
     throw error;
   }
 };
@@ -67,7 +59,19 @@ export const updateVendorProfile = async (token, profileData) => {
     });
 
     if (!response.ok) {
-      throw new Error(`Error: ${response.status}`);
+      if (response.status === 401 && typeof window !== "undefined") {
+        localStorage.removeItem("accessToken");
+      }
+      const data = await response.json().catch(() => ({}));
+      const firstErr =
+        data.detail ||
+        data.error ||
+        (data.business_name && (Array.isArray(data.business_name) ? data.business_name[0] : data.business_name)) ||
+        (data.profile_image && (Array.isArray(data.profile_image) ? data.profile_image[0] : data.profile_image)) ||
+        (data.instagram_handle && (Array.isArray(data.instagram_handle) ? data.instagram_handle[0] : data.instagram_handle)) ||
+        (typeof data === "object" ? Object.values(data).flat()[0] : null) ||
+        `Error: ${response.status}`;
+      throw new Error(firstErr);
     }
 
     return await response.json();
@@ -88,12 +92,17 @@ export const getVendorStats = async (token) => {
     });
 
     if (!response.ok) {
+      if (response.status === 401 && typeof window !== "undefined") {
+        localStorage.removeItem("accessToken");
+      }
       throw new Error(response.status === 401 ? "Unauthorized" : `Error: ${response.status}`);
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Failed to fetch vendor stats:", error);
+    if (error?.message !== "Unauthorized" && !error?.message?.includes("401")) {
+      console.error("Failed to fetch vendor stats:", error);
+    }
     throw error;
   }
 };
@@ -119,6 +128,49 @@ export const getVendorWishlistAnalysis = async (token) => {
   }
 };
 
+export const getVendorAnalysis = async (token, period = "30") => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/vendor/analysis/?period=${period}`, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(response.status === 401 ? "Unauthorized" : `Error: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Failed to fetch vendor analysis:", error);
+    throw error;
+  }
+};
+
+export const cancelSubscription = async (token) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/subscriptions/cancel/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.detail || data.message || `Error: ${response.status}`);
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Failed to cancel subscription:", error);
+    throw error;
+  }
+};
+
 export const getVendorProducts = async (token, page = 1, pageSize = 10) => {
   try {
     const response = await fetch(
@@ -133,12 +185,17 @@ export const getVendorProducts = async (token, page = 1, pageSize = 10) => {
     );
 
     if (!response.ok) {
+      if (response.status === 401 && typeof window !== "undefined") {
+        localStorage.removeItem("accessToken");
+      }
       throw new Error(`Error: ${response.status}`);
     }
 
     return await response.json();
   } catch (error) {
-    console.error("Failed to fetch vendor products:", error);
+    if (error?.message !== "Unauthorized" && !error?.message?.includes("401")) {
+      console.error("Failed to fetch vendor products:", error);
+    }
     throw error;
   }
 };
@@ -193,7 +250,18 @@ export const updateProduct = async (token, productId, productData) => {
 
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      throw new Error(data.instagram_post_url?.[0] || data.detail || data.error || `Error: ${response.status}`);
+      const rawPostErr = data.instagram_post_url;
+      const postUrlMsg = Array.isArray(rawPostErr) ? rawPostErr[0] : (typeof rawPostErr === "string" ? rawPostErr : null);
+      const errMsg =
+        postUrlMsg ||
+        data.detail ||
+        data.error ||
+        (data.title && (Array.isArray(data.title) ? data.title[0] : data.title)) ||
+        (data.productImage && (Array.isArray(data.productImage) ? data.productImage[0] : data.productImage)) ||
+        (data.price && (Array.isArray(data.price) ? data.price[0] : data.price)) ||
+        (typeof data === "object" ? Object.values(data).flat()[0] : null) ||
+        `Error: ${response.status}`;
+      throw new Error(errMsg);
     }
 
     return await response.json();
@@ -214,6 +282,9 @@ export const deleteProduct = async (token, productId) => {
     });
 
     if (!response.ok) {
+      if (response.status === 401 && typeof window !== "undefined") {
+        localStorage.removeItem("accessToken");
+      }
       throw new Error(`Error: ${response.status}`);
     }
 
@@ -234,6 +305,9 @@ export const getPublicVendorBySlug = async (slug) => {
       },
     });
     if (!response.ok) {
+      if (response.status === 401 && typeof window !== "undefined") {
+        localStorage.removeItem("accessToken");
+      }
       throw new Error(`Error: ${response.status}`);
     }
     return await response.json();

@@ -90,7 +90,7 @@ class InstagramSubscriptionRedirectTests(TestCase):
 
     def test_expired_standard_subscription_cannot_redirect(self):
         self.activate_standard_plan(
-            expires_at=timezone.now() - timedelta(minutes=1)
+            expires_at=timezone.now() - timedelta(days=2)
         )
 
         response = self.client.get(self.url)

@@ -62,6 +62,9 @@ def customer_follows(request):
             customer=request.user,
             vendor=vendor,
         )
+        if created:
+            vendor.follower_count = VendorFollow.objects.filter(vendor=vendor, customer__vendor_profile__isnull=True).count()
+            vendor.save(update_fields=["follower_count"])
 
     return Response(
         {"vendor_id": vendor.pk, "is_following": True},
@@ -73,7 +76,10 @@ def customer_follows(request):
 @permission_classes([IsAuthenticated])
 def customer_unfollow(request, vendor_id):
     _require_customer(request.user)
-    VendorFollow.objects.filter(customer=request.user, vendor_id=vendor_id).delete()
+    deleted, _ = VendorFollow.objects.filter(customer=request.user, vendor_id=vendor_id).delete()
+    if deleted:
+        count = VendorFollow.objects.filter(vendor_id=vendor_id, customer__vendor_profile__isnull=True).count()
+        Vendor.objects.filter(pk=vendor_id).update(follower_count=count)
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 

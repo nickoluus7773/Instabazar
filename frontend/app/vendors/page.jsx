@@ -64,7 +64,7 @@ export default function VendorsPage() {
         {loading && <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{[1, 2, 3, 4].map((item) => <div key={item} className="h-[28rem] animate-pulse rounded-[1.75rem] bg-white shadow-sm"><div className="h-48 rounded-t-[1.75rem] bg-slate-200" /><div className="space-y-4 p-5"><div className="h-4 w-2/5 rounded bg-slate-200" /><div className="h-7 w-3/4 rounded bg-slate-200" /><div className="h-12 rounded bg-slate-100" /></div></div>)}</div>}
         {error && <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-sm font-medium text-red-700">{error}</div>}
         {!loading && !error && filteredVendors.length === 0 && <div className="rounded-[1.75rem] border border-dashed border-slate-300 bg-white px-6 py-16 text-center"><Compass className="mx-auto text-slate-300" size={34} /><h3 className="mt-4 text-xl font-black text-slate-900">No stores match that search</h3><p className="mt-2 text-sm text-slate-500">Try a different store name or clear the search.</p></div>}
-        {!loading && !error && filteredVendors.length > 0 && <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{filteredVendors.map((vendor, index) => <VendorCard key={vendor.id} vendor={vendor} index={index} />)}</div>}
+        {!loading && !error && filteredVendors.length > 0 && <div className="grid items-stretch gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">{filteredVendors.map((vendor, index) => <VendorCard key={vendor.id} vendor={vendor} index={index} />)}</div>}
       </section>
       <Footer />
     </main>

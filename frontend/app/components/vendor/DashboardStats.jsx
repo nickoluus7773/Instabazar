@@ -99,7 +99,7 @@ export default function DashboardStats({ stats, subscriptionPlan }) {
           {subscriptionPlan === "paid" ? "Premium" : "Free"}
         </p>
         <Link
-          href="/vendor/subscription"
+          href="/subscription"
           className="text-xs text-blue-600 font-semibold hover:text-blue-700 mt-1 inline-block"
         >
           {subscriptionPlan === "free" ? "Upgrade" : "Manage"} →

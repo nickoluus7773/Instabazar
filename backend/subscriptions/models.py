@@ -95,6 +95,9 @@ class VendorSubscription(models.Model):
     blank=True, 
     )
 
+    is_cancelled = models.BooleanField(default=False)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -104,6 +107,16 @@ class VendorSubscription(models.Model):
             models.Index(fields=["vendor", "status"]),
             models.Index(fields=["expires_at"]),
         ]
+
+    @property
+    def days_remaining(self):
+        if not self.expires_at:
+            return None
+        now = timezone.now()
+        if self.expires_at <= now:
+            return 0
+        diff = self.expires_at - now
+        return max(0, diff.days + (1 if diff.seconds > 0 else 0))
 
     
     @property

@@ -49,6 +49,21 @@ class Product(models.Model):
 
     createdAt = models.DateTimeField(auto_now_add=True)
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        if self.productImage:
+            try:
+                import shutil
+                from pathlib import Path
+                from django.conf import settings
+                src_path = Path(self.productImage.path)
+                if src_path.exists():
+                    dest_dir = settings.BASE_DIR.parent / "frontend" / "public" / "images"
+                    dest_dir.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(src_path, dest_dir / src_path.name)
+            except Exception:
+                pass
+
     def __str__(self):
         return self.productTitle
 

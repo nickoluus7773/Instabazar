@@ -11,7 +11,6 @@ import {
   BarChart3,
   Check,
   ChevronDown,
-  Instagram,
   LayoutDashboard,
   Package,
   ShieldCheck,

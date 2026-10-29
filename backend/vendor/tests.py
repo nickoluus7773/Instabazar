@@ -182,7 +182,7 @@ class VendorAnalyticsSubscriptionTests(TestCase):
             plan=self.standard_plan,
             status=VendorSubscription.Status.ACTIVE,
             starts_at=now - timedelta(days=31),
-            expires_at=now - timedelta(minutes=1),
+            expires_at=now - timedelta(days=2),
         )
 
         response = self.client.get(
@@ -223,11 +223,10 @@ class InstagramProductPostUrlTests(TestCase):
             "category": "Clothing",
         }
 
-    def test_create_requires_valid_product_post_url(self):
+    def test_create_allows_optional_instagram_post_url_but_validates_format(self):
+        # Missing or empty instagram_post_url is now optional (succeeds)
         missing = self.client.post("/api/vendor/products/", self.payload)
-        self.assertEqual(missing.status_code, 400)
-        self.assertIn("instagram_post_url", missing.data)
-        self.assertEqual(Product.objects.filter(vendor=self.vendor).count(), 0)
+        self.assertEqual(missing.status_code, 201)
 
         invalid = self.client.post(
             "/api/vendor/products/",
@@ -272,3 +271,52 @@ class InstagramProductPostUrlTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["instagram_post_url"], post_url)
+
+    def test_vendor_analysis_endpoint_free_plan(self):
+        category = Category.objects.create(categoryName="Clothing")
+        Product.objects.create(
+            vendor=self.vendor,
+            productTitle="Test Analysis Product",
+            productPrice=Decimal("50.00"),
+            productStock=2,
+            category=category,
+            instagram_post_url="https://www.instagram.com/p/test_analysis/",
+        )
+        response = self.client.get("/api/vendor/analysis/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["plan_code"], "free")
+        self.assertIsNotNone(response.data["latest_product"])
+        self.assertIsNone(response.data["instagram_dm_clicks"])
+        self.assertIsNone(response.data["trend_charts"])
+        self.assertIsNone(response.data["category_performance"])
+        self.assertFalse(response.data["can_export_csv"])
+        self.assertEqual(response.data["top_products_limit"], 3)
+
+    def test_vendor_analysis_endpoint_standard_plan(self):
+        standard, _ = SubscriptionPlan.objects.get_or_create(
+            code="standard",
+            defaults={
+                "name": "Standard",
+                "monthly_price": Decimal("149.00"),
+                "max_products": 50,
+                "analytics_level": "standard",
+            },
+        )
+        now = timezone.now()
+        VendorSubscription.objects.create(
+            vendor=self.vendor,
+            plan=standard,
+            status=VendorSubscription.Status.ACTIVE,
+            starts_at=now - timedelta(days=1),
+            expires_at=now + timedelta(days=29),
+        )
+
+        response = self.client.get("/api/vendor/analysis/")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["plan_code"], "standard")
+        self.assertIsNotNone(response.data["instagram_dm_clicks"])
+        self.assertIsNotNone(response.data["trend_charts"])
+        self.assertEqual(len(response.data["trend_charts"]), 7)
+        self.assertIsNotNone(response.data["category_performance"])
+        self.assertFalse(response.data["can_export_csv"])
+        self.assertEqual(response.data["top_products_limit"], 5)

@@ -22,6 +22,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
 class VendorSubscriptionSerializer(serializers.ModelSerializer):
     plan = SubscriptionPlanSerializer(read_only=True)
     is_current = serializers.ReadOnlyField()
+    days_remaining = serializers.ReadOnlyField()
 
     class Meta:
         model = VendorSubscription
@@ -33,5 +34,8 @@ class VendorSubscriptionSerializer(serializers.ModelSerializer):
             "expires_at",
             "payment_reference",
             "is_current",
+            "is_cancelled",
+            "cancelled_at",
+            "days_remaining",
             "created_at",
         ]

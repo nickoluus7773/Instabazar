@@ -5,6 +5,7 @@
   import Navbar from "../components/layout/Navbar";
   import Footer from "../components/home/Footer";
   import API_BASE_URL from "@/lib/api";
+  import { getImageUrl } from "@/lib/imageHelper";
 
   // Helper function to safely extract string name from category (string or object)
   function getCategoryName(category) {
@@ -68,77 +69,71 @@
       </aside>
     );
   }
-  function getImageUrl(image) {
-    if (!image) return "";
 
-    // If it's already an external image URL that is NOT Django media
-    if (
-      (image.startsWith("http://") || image.startsWith("https://")) &&
-      !image.includes("/products/")
-    ) {
-      return image;
-    }
-
-    // Any Django product media path:
-    // /media/products/heroimg1.png
-    // http://127.0.0.1:8000/media/products/heroimg1.png
-    // http://127.0.0.1:8000/media/media/media/products/heroimg1.png
-    if (image.includes("/products/")) {
-      const filename = image.split("/products/").pop();
-      return `/images/${filename}`;
-    }
-
-    return image;
-  }
   /* ─── Product Card Component ─── */
- function ProductCard({ product }) {
-  const categoryName = getCategoryName(product.category);
+  function ProductCard({ product }) {
+    const categoryName = getCategoryName(product.category);
+    const vendorName =
+      typeof product.vendor === "string"
+        ? product.vendor
+        : product.vendor?.business_name || product.vendor?.name || "";
 
-  return (
-    <Link
-      href={`/gallery/product/${product.id}`}
-      className="block h-full"
-    >
-      <article className="group h-full overflow-hidden rounded-xl border border-[#E5E7EB] bg-white transition-shadow duration-200 hover:shadow-md">
-        {/* Compact product image */}
-        <div className="relative h-32 overflow-hidden bg-[#F1F3F8] sm:h-36">
-          <img
-            src={getImageUrl(product.productImage)}
-            alt={product.productTitle}
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          />
-
-          <span className="absolute left-2 top-2 max-w-[70%] truncate rounded-md bg-[#172554]/90 px-2 py-1 text-[10px] font-medium text-white">
-            {categoryName}
-          </span>
-        </div>
-
-        {/* Minimal card content */}
-        <div className="p-3">
-          <p className="mb-1 text-xs text-gray-500">
-            {product.productCondition || "New"}
-          </p>
-
-          <h2 className="line-clamp-1 text-sm font-semibold text-[#172554] group-hover:text-[#6D28D9]">
-            {product.productTitle}
-          </h2>
-
-          <p className="mt-1 line-clamp-1 text-xs text-gray-500">
-            {product.productDescription}
-          </p>
-
-          <p className="mt-2 text-lg font-bold text-[#6D28D9]">
-            ₹{product.productPrice}
-          </p>
-
-          <div className="mt-2 rounded-lg bg-[#172554] py-2 text-center text-xs font-semibold text-white transition-colors group-hover:bg-[#6D28D9]">
-            View Product
+    return (
+      <Link href={`/gallery/product/${product.id}`} className="group block h-full">
+        <article className="h-full flex flex-col overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xs transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:border-purple-200">
+          {/* Product Image Area */}
+          <div className="relative aspect-square w-full overflow-hidden bg-slate-100">
+            <img
+              src={getImageUrl(product.productImage)}
+              alt={product.productTitle}
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+            {/* Category Pill */}
+            <span className="absolute left-3.5 top-3.5 max-w-[70%] truncate rounded-full bg-slate-950/80 backdrop-blur-md px-3 py-1 text-[11px] font-bold text-white shadow-sm">
+              {categoryName}
+            </span>
+            {/* Condition Badge */}
+            {product.productCondition && (
+              <span className="absolute right-3.5 top-3.5 rounded-full bg-white/95 backdrop-blur-md px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-slate-800 shadow-sm border border-slate-200/60">
+                {product.productCondition}
+              </span>
+            )}
           </div>
-        </div>
-      </article>
-    </Link>
-  );
-}
+
+          {/* Card Content */}
+          <div className="p-5 flex flex-col flex-1 justify-between gap-4">
+            <div>
+              {vendorName && (
+                <p className="text-xs font-semibold text-purple-600 mb-1 line-clamp-1">
+                  {vendorName}
+                </p>
+              )}
+              <h2 className="line-clamp-2 text-base font-bold text-slate-900 group-hover:text-purple-600 transition-colors leading-snug">
+                {product.productTitle}
+              </h2>
+              {product.productDescription && (
+                <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-slate-500">
+                  {product.productDescription}
+                </p>
+              )}
+            </div>
+
+            <div className="pt-3.5 border-t border-slate-100 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block tracking-wider">Price</span>
+                <span className="text-lg font-black text-slate-950">
+                  ₹{Number(product.productPrice || 0).toLocaleString("en-IN")}
+                </span>
+              </div>
+              <span className="inline-flex items-center gap-1 rounded-xl bg-purple-50 group-hover:bg-purple-600 text-purple-700 group-hover:text-white px-3.5 py-2 text-xs font-bold transition-all shadow-xs">
+                View <span>→</span>
+              </span>
+            </div>
+          </div>
+        </article>
+      </Link>
+    );
+  }
   /* ─── Gallery Main Page ─── */
   export default function GalleryPage() {
     const [products, setProducts] = useState([]);
@@ -287,54 +282,52 @@
       <>
         <Navbar />
 
-        <main className="min-h-screen bg-slate-50/70 ">
-          <div className="max-w-8xl ">
-
+        <main className="min-h-screen bg-[#FBFBFC]">
+          {/* Header Banner */}
           <section className="relative overflow-hidden bg-slate-950 text-white">
-          <div className="absolute -right-28 -top-36 h-96 w-96 rounded-full bg-fuchsia-500/20 blur-3xl" />
-          <div className="absolute -bottom-48 left-1/3 h-96 w-96 rounded-full bg-orange-400/15 blur-3xl" />
-          <div className="relative mx-auto max-w-7xl px-6 pb-4 pt-10">
-          <div className="mb-8 ">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-100 text-purple-700 text-xs font-extrabold uppercase tracking-wider mb-3">
-                🛍️ Thrift Store Marketplace
+            <div className="absolute -right-28 -top-36 h-96 w-96 rounded-full bg-fuchsia-500/20 blur-3xl pointer-events-none" />
+            <div className="absolute -bottom-48 left-1/3 h-96 w-96 rounded-full bg-orange-400/15 blur-3xl pointer-events-none" />
+            <div className="relative mx-auto max-w-7xl px-6 py-12 sm:py-16">
+              <div className="max-w-3xl">
+                <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-bold uppercase tracking-wider mb-4">
+                  <span>🛍️</span> Marketplace Directory
+                </div>
+                <h1 className="text-4xl font-black leading-tight tracking-tight sm:text-5xl lg:text-6xl text-white">
+                  Explore Curated Finds
+                </h1>
+                <p className="text-slate-400 mt-3 text-base sm:text-lg max-w-2xl leading-relaxed">
+                  Discover handpicked independent sellers, vintage streetwear, artisanal jewelry, handmade ceramics, and bespoke lifestyle products.
+                </p>
               </div>
-              <h1 className="text-4xl font-black leading-[1.02] tracking-tight sm:text-6xl">
-                Explore All Products
-              </h1>
-              <p className="text-slate-500 mt-2 text-base max-w-2xl">
-                Discover unique handpicked items, vintage fashion, handcrafted jewelry, and home decor from top sellers.
-              </p>
             </div>
-          </div>
-        </section>
-            {/* Header Banner */}
-            
+          </section>
 
-            {/* ─── Integrated 2-Column Layout: Categories (Left) & Search + Grid (Right) ─── */}
-            <div className="flex flex-col lg:flex-row gap-8 items-start mt-5">
+          {/* ─── Integrated 2-Column Layout with proper margins and padding ─── */}
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12 pb-24">
+            <div className="flex flex-col lg:flex-row gap-8 xl:gap-10 items-start">
               
-              {/* Left Sidebar: Categories (Aligned starting from top left!) */}
+              {/* Left Sidebar: Categories */}
               <CategorySidebar
                 categories={categories}
                 selectedCategory={selectedCategory}
                 onSelectCategory={setSelectedCategory}
               />
 
-              {/* Right Main Area: Compact Search & Filter Bar + Product Grid */}
+              {/* Right Main Area */}
               <div className="flex-1 min-w-0 w-full space-y-6">
                 
-                {/* Compact Search & Filter Control Card (Aligned right above 1st product card!) */}
-                <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-sm border border-slate-200/80">
+                {/* Search & Filter Control Card */}
+                <div className="bg-white rounded-3xl p-4 sm:p-5 shadow-xs border border-slate-200/80">
                   <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3">
                     
-                    {/* Compact Search Input */}
+                    {/* Search Input */}
                     <div className="relative flex-1">
                       <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
                         🔍
                       </span>
                       <input
                         type="text"
-                        placeholder="Search products..."
+                        placeholder="Search products, brands, or categories..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="w-full h-11 pl-10 pr-9 rounded-2xl bg-slate-50 border border-slate-200 focus:border-purple-500 focus:bg-white text-xs sm:text-sm text-slate-900 font-medium transition-all outline-none"
@@ -342,7 +335,7 @@
                       {searchQuery && (
                         <button
                           onClick={() => setSearchQuery("")}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs bg-slate-200 hover:bg-slate-300 w-5 h-5 rounded-full flex items-center justify-center transition"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 text-xs bg-slate-200 hover:bg-slate-300 w-5 h-5 rounded-full flex items-center justify-center transition cursor-pointer"
                           title="Clear search"
                         >
                           ✕
@@ -350,7 +343,7 @@
                       )}
                     </div>
 
-                    {/* Filter Dropdowns - Clean & Compact Row */}
+                    {/* Filter Dropdowns */}
                     <div className="flex flex-wrap items-center gap-2">
                       <select
                         value={priceRange}
@@ -402,17 +395,16 @@
 
                 {/* Showing Result Counter Header */}
                 <div className="flex items-center justify-between px-1">
-                  <p className="text-xs sm:text-sm font-bold text-slate-500">
-                    Showing <span className="text-purple-600 font-extrabold text-base">{filteredProducts.length}</span> {filteredProducts.length === 1 ? "product" : "products"}
+                  <p className="text-xs sm:text-sm font-semibold text-slate-500">
+                    Showing <span className="text-purple-600 font-extrabold text-sm sm:text-base">{filteredProducts.length}</span> {filteredProducts.length === 1 ? "product" : "products"}
                     {selectedCategory !== "All" && <span> in <span className="text-slate-900 font-bold">{selectedCategory}</span></span>}
                     {searchQuery && <span> matching "<span className="text-slate-900 font-bold">{searchQuery}</span>"</span>}
                   </p>
                 </div>
 
-                {/* Product Grid */}
+                {/* Product Grid with proper gap and responsive columns */}
                 {filteredProducts.length === 0 ? (
-                  <div className="mb-10  mr-5">
-                  <div className="text-center py-20 px-6 bg-white rounded-3xl border border-slate-200/80 shadow-sm flex flex-col items-center justify-center">
+                  <div className="text-center py-20 px-6 bg-white rounded-3xl border border-slate-200/80 shadow-xs flex flex-col items-center justify-center">
                     <div className="w-16 h-16 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center text-3xl mb-4">
                       🔍
                     </div>
@@ -427,13 +419,12 @@
                       Reset All Filters
                     </button>
                   </div>
-                  </div>
                 ) : (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-  {filteredProducts.map((product) => (
-    <ProductCard key={product.id} product={product} />
-  ))}
-</div>
+                  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+                    {filteredProducts.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
                 )}
               </div>
             </div>

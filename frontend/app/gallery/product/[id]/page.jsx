@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { X, ZoomIn } from "lucide-react";
 import Navbar from "../../../components/layout/Navbar";
 import Footer from "../../../components/home/Footer";
 import API_BASE_URL from "@/lib/api";
+import { getImageUrl } from "@/lib/imageHelper";
 
 // Helper function to safely extract string name from category (string or object)
 function getCategoryName(category) {
@@ -15,23 +17,6 @@ function getCategoryName(category) {
     return (category.categoryName || category.name || "Handmade").trim();
   }
   return String(category).trim();
-}
-function getImageUrl(image) {
-  if (!image) return "";
-
-  if (
-    (image.startsWith("http://") || image.startsWith("https://")) &&
-    !image.includes("/products/")
-  ) {
-    return image;
-  }
-
-  if (image.includes("/products/")) {
-    const filename = image.split("/products/").pop();
-    return `/images/${filename}`;
-  }
-
-  return image;
 }
 
 export default function ProductDetailPage() {
@@ -44,6 +29,21 @@ const [loading, setLoading] = useState(true);
   const [favorite, setFavorite] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") setPreviewOpen(false);
+    };
+    if (previewOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "hidden";
+    }
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      document.body.style.overflow = "unset";
+    };
+  }, [previewOpen]);
 
   useEffect(() => {
     fetchLiveProduct();
@@ -190,12 +190,20 @@ const [loading, setLoading] = useState(true);
           {/* Left Column: Image Preview + Thumbnails */}
           <div className="lg:col-span-6 flex flex-col items-center">
             {/* Main Image Box with soft curved corners */}
-            <div className="w-full aspect-square max-w-[500px] bg-[#F4EFE6]/60 rounded-3xl p-6 sm:p-8 flex items-center justify-center border border-stone-200/70 shadow-sm relative overflow-hidden">
+            <div
+              onClick={() => setPreviewOpen(true)}
+              className="w-full aspect-square max-w-[500px] bg-[#F4EFE6]/60 rounded-3xl p-6 sm:p-8 flex items-center justify-center border border-stone-200/70 shadow-sm relative overflow-hidden cursor-zoom-in group transition hover:shadow-md"
+              title="Click to preview full image"
+            >
               <img
-  src={getImageUrl(mainImageUrl)}
-  alt={title}
-  className="w-full h-full object-contain mix-blend-multiply drop-shadow-md transition-all duration-300 hover:scale-105"
-/>
+                src={getImageUrl(mainImageUrl)}
+                alt={title}
+                className="w-full h-full object-contain mix-blend-multiply drop-shadow-md transition-all duration-300 group-hover:scale-105"
+              />
+              <div className="absolute bottom-4 right-4 bg-slate-900/75 hover:bg-slate-950 text-white text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition shadow-md pointer-events-none">
+                <ZoomIn size={14} />
+                <span>Preview</span>
+              </div>
             </div>
 
             {/* Thumbnails Row */}
@@ -304,18 +312,13 @@ const [loading, setLoading] = useState(true);
             {/* CTA Buttons: Instagram DM + Save */}
             <div className="flex items-center gap-3 pt-2">
               <a
-                href={product.instagram_post_url || undefined}
-                aria-disabled={!product.instagram_post_url}
-                title={!product.instagram_post_url ? "The vendor has not added an Instagram post for this product yet." : undefined}
-                onClick={(event) => {
-                  if (!product.instagram_post_url) event.preventDefault();
-                }}
+                href="https://www.instagram.com/instabazaar.official/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 sm:flex-initial sm:px-8 py-3.5 bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold rounded-2xl text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-center aria-disabled:cursor-not-allowed aria-disabled:opacity-60"
+                className="flex-1 sm:flex-initial sm:px-8 py-3.5 bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold rounded-2xl text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-center"
               >
                 <span>🛍️</span>
-                <span>{product.instagram_post_url ? "View on Instagram" : "Instagram post unavailable"}</span>
+                <span>Order via Instagram DM</span>
               </a>
 
               <button
@@ -391,6 +394,39 @@ const [loading, setLoading] = useState(true);
           </p>
         </section>
       </main>
+
+      {/* Fullscreen Image Preview Lightbox Modal */}
+      {previewOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-md p-4 sm:p-6 animate-in fade-in duration-200"
+          onClick={() => setPreviewOpen(false)}
+        >
+          <button
+            type="button"
+            onClick={() => setPreviewOpen(false)}
+            className="absolute top-5 right-5 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 p-2.5 rounded-full transition cursor-pointer z-10"
+            aria-label="Close image preview"
+          >
+            <X size={26} />
+          </button>
+          <div
+            className="relative max-w-4xl max-h-[90vh] flex flex-col items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <img
+              src={getImageUrl(mainImageUrl)}
+              alt={title}
+              className="max-h-[82vh] max-w-full object-contain rounded-2xl shadow-2xl bg-white/5"
+            />
+            <div className="mt-3 text-center">
+              <p className="text-sm sm:text-base font-bold text-white tracking-wide">{title}</p>
+              <p className="text-xs text-slate-400 mt-0.5">Click anywhere outside or press ESC to close</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </div>

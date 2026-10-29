@@ -155,18 +155,17 @@ export default function VendorProfile() {
       const token = localStorage.getItem("accessToken");
       const payload = new FormData();
 
-      Object.entries(formData).forEach(([key, value]) => {
-        if (
-          key !== "profile_image" &&
-          value !== null &&
-          value !== undefined
-        ) {
-          payload.append(key, value);
+      const allowedFields = ["business_name", "instagram_handle", "location", "bio"];
+      allowedFields.forEach((field) => {
+        if (formData[field] !== undefined && formData[field] !== null) {
+          payload.append(field, formData[field]);
         }
       });
 
       if (formData.profile_image instanceof File) {
         payload.append("profile_image", formData.profile_image);
+      } else if (formData.logo_url && typeof formData.logo_url === "string") {
+        payload.append("logo_url", formData.logo_url);
       }
 
       const updated = await updateVendorProfile(token, payload);
@@ -179,7 +178,7 @@ export default function VendorProfile() {
       setEditing(false);
       setSuccess("Your store profile has been updated successfully.");
     } catch (err) {
-      setError("Failed to update profile. Please check your details and try again.");
+      setError(err?.message || "Failed to update profile. Please check your details and try again.");
       console.error(err);
     } finally {
       setSaving(false);

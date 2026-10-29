@@ -5,12 +5,20 @@ from subscriptions.services import vendor_can_be_followed
 
 
 class VendorSerializer(serializers.ModelSerializer):
-    product_count = serializers.IntegerField(read_only=True)
+    product_count = serializers.SerializerMethodField()
     follower_count = serializers.SerializerMethodField()
     follow_eligible = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
     logo_url = serializers.SerializerMethodField()
     profile_image = serializers.ImageField(required=False, allow_null=True, write_only=True)
+
+    def get_product_count(self, obj):
+        from subscriptions.services import get_product_limit
+        limit = get_product_limit(obj)
+        total = obj.products.filter(is_active=True).count()
+        if limit is not None:
+            return min(total, limit)
+        return total
 
     def get_logo_url(self, obj):
         if obj.profile_image:
@@ -50,7 +58,7 @@ class VendorSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'verification_status', 'logo_url']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'verification_status', 'logo_url', 'subscription_plan']
 
 
 class VendorProductSerializer(serializers.ModelSerializer):
@@ -88,20 +96,40 @@ class VendorProductSerializer(serializers.ModelSerializer):
 
 
 class VendorDetailSerializer(serializers.ModelSerializer):
-    product_count = serializers.IntegerField(read_only=True)
+    product_count = serializers.SerializerMethodField()
     follower_count = serializers.SerializerMethodField()
     follow_eligible = serializers.SerializerMethodField()
     is_following = serializers.SerializerMethodField()
-    products = VendorProductSerializer(many=True, read_only=True)
-    logo_url = serializers.SerializerMethodField()
-    profile_image = serializers.ImageField(required=False, allow_null=True, write_only=True)
+    products = serializers.SerializerMethodField()
+    logo_url = serializers.CharField(required=False, allow_blank=True, allow_null=True)
+    profile_image = serializers.ImageField(required=False, allow_null=True)
 
-    def get_logo_url(self, obj):
+    def get_product_count(self, obj):
+        from subscriptions.services import get_product_limit
+        limit = get_product_limit(obj)
+        total = obj.products.filter(is_active=True).count()
+        if limit is not None:
+            return min(total, limit)
+        return total
+
+    def get_products(self, obj):
+        from subscriptions.services import get_product_limit
+        limit = get_product_limit(obj)
+        qs = obj.products.filter(is_active=True).order_by("createdAt")
+        if limit is not None:
+            qs = qs[:limit]
+        return VendorProductSerializer(qs, many=True, context=self.context).data
+
+    def to_representation(self, obj):
+        data = super().to_representation(obj)
         if obj.profile_image:
             request = self.context.get("request")
-            image_url = obj.profile_image.url
-            return request.build_absolute_uri(image_url) if request else image_url
-        return obj.logo_url
+            try:
+                image_url = obj.profile_image.url
+                data["logo_url"] = request.build_absolute_uri(image_url) if request else image_url
+            except Exception:
+                pass
+        return data
 
     def get_follow_eligible(self, obj):
         return vendor_can_be_followed(obj)
@@ -136,4 +164,4 @@ class VendorDetailSerializer(serializers.ModelSerializer):
             'created_at',
             'updated_at',
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'verification_status', 'store_slug', 'logo_url']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'verification_status', 'store_slug', 'subscription_plan']

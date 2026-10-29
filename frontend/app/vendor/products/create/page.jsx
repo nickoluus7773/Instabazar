@@ -139,7 +139,7 @@ export default function CreateProduct() {
       return;
     }
 
-    if (!isInstagramPostUrl(formData.instagram_post_url)) {
+    if (formData.instagram_post_url?.trim() && !isInstagramPostUrl(formData.instagram_post_url)) {
       setError("Enter a valid direct Instagram post, reel, or video URL for this product.");
       return;
     }
@@ -153,7 +153,7 @@ export default function CreateProduct() {
       payload.append("description", formData.description.trim());
       payload.append("price", formData.price);
       payload.append("category", formData.category);
-      payload.append("instagram_post_url", formData.instagram_post_url.trim());
+      payload.append("instagram_post_url", formData.instagram_post_url ? formData.instagram_post_url.trim() : "");
 
       // Retained for backend compatibility. Stock is not managed in this UI.
       payload.append("stock", "1");
@@ -363,7 +363,7 @@ export default function CreateProduct() {
 
                     <div>
                       <label htmlFor="instagram_post_url" className={labelClass}>
-                        Instagram product post URL <span className="text-violet-300">*</span>
+                        Instagram product post URL <span className="text-xs text-slate-400 font-normal">(Optional)</span>
                       </label>
                       <input
                         id="instagram_post_url"
@@ -371,7 +371,6 @@ export default function CreateProduct() {
                         name="instagram_post_url"
                         value={formData.instagram_post_url}
                         onChange={handleChange}
-                        required
                         className={inputClass}
                         placeholder="https://www.instagram.com/p/your-product-post/"
                       />
@@ -568,7 +567,7 @@ export default function CreateProduct() {
 
                         {isLimitError && (
                           <Link
-                            href="/vendor/subscription"
+                            href="/subscription"
                             className="mt-3 inline-flex items-center gap-2 rounded-lg bg-violet-600 px-3.5 py-2.5 text-sm font-semibold text-white transition hover:bg-violet-500"
                           >
                             Upgrade subscription
@@ -681,7 +680,7 @@ export default function CreateProduct() {
                 </section>
 
                 <Link
-                  href="/vendor/subscription"
+                  href="/subscription"
                   className="flex items-center justify-between gap-3 rounded-2xl border border-white/[0.08] bg-[#11162A] p-4 transition hover:border-violet-400/25"
                 >
                   <div>

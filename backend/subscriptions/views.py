@@ -99,6 +99,12 @@ class SubscriptionHistoryView(APIView):
 class SubscribeView(APIView):
     permission_classes = [IsAuthenticated]
 
+    def get(self, request):
+        return Response(
+            {"detail": "Method \"GET\" not allowed."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
+
     @transaction.atomic
     def post(self, request):
         vendor = get_vendor_for_user(request.user)
@@ -397,4 +403,50 @@ class VerifyPaymentView(APIView):
             "subscription": VendorSubscriptionSerializer(
                 subscription
             ).data,
+        }, status=status.HTTP_200_OK)
+
+
+class CancelSubscriptionView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    @transaction.atomic
+    def post(self, request):
+        vendor = get_vendor_for_user(request.user)
+
+        if vendor is None:
+            return Response(
+                {"detail": "Vendor profile not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        subscription = get_current_subscription(vendor)
+
+        if not subscription or subscription.plan.monthly_price <= 0:
+            return Response(
+                {"detail": "You do not have an active paid subscription to cancel."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        from django.utils import timezone
+
+        if subscription.is_cancelled:
+            expiry_str = subscription.expires_at.strftime("%d %b %Y") if subscription.expires_at else "end of billing cycle"
+            return Response({
+                "message": f"Your subscription is already cancelled. Your plan remains active for {subscription.days_remaining} more days until {expiry_str}.",
+                "subscription": VendorSubscriptionSerializer(subscription).data,
+                "days_remaining": subscription.days_remaining,
+                "expires_at": subscription.expires_at,
+            }, status=status.HTTP_200_OK)
+
+        now = timezone.now()
+        subscription.is_cancelled = True
+        subscription.cancelled_at = now
+        subscription.save(update_fields=["is_cancelled", "cancelled_at", "updated_at"])
+
+        expiry_str = subscription.expires_at.strftime("%d %b %Y") if subscription.expires_at else "end of billing cycle"
+        return Response({
+            "message": f"Subscription cancelled successfully. You will retain full access for {subscription.days_remaining} more days until {expiry_str}.",
+            "subscription": VendorSubscriptionSerializer(subscription).data,
+            "days_remaining": subscription.days_remaining,
+            "expires_at": subscription.expires_at,
         }, status=status.HTTP_200_OK)

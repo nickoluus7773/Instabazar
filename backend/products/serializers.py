@@ -36,6 +36,4 @@ class ProductSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
-        if self.instance is None and not attrs.get("instagram_post_url"):
-            raise serializers.ValidationError({"instagram_post_url": "A product-specific Instagram post URL is required."})
         return attrs

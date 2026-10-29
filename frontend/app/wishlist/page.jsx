@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Heart, ShoppingBag, ArrowRight, Trash2 } from "lucide-react";
 import { useFavorites } from "@/context/FavoritesContext";
 import API_BASE_URL from "@/lib/api";
+import { getImageUrl } from "@/lib/imageHelper";
 import Navbar from "../components/layout/Navbar";
 import Footer from "../components/home/Footer";
 import Card from "../components/ui/Card";
@@ -12,11 +13,6 @@ import SectionHeading from "../components/ui/SectionHeading";
 
 export default function WishlistPage() {
   const { favoriteProducts, toggleFavorite } = useFavorites();
-
-  function getImageUrl(image) {
-    if (!image) return "/images/product-placeholder.svg";
-    return image.startsWith("http") ? image : `${API_BASE_URL}${image}`;
-  }
 
   function getCategoryName(category) {
     if (typeof category === "string") return category;

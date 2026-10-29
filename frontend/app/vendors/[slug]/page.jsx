@@ -7,6 +7,7 @@ import { ArrowLeft, ArrowUpRight, BadgeCheck, MapPin, Package, Search, Users } f
 import Navbar from "@/app/components/layout/Navbar";
 import Footer from "@/app/components/home/Footer";
 import { getPublicVendorBySlug } from "@/lib/vendorApi";
+import { getImageUrl } from "@/lib/imageHelper";
 // import { getVendorStoreData } from "@/app/data/vendorStoreData";
 import { getLocalVendorImage } from "@/app/data/vendorImages";
 import FollowButton from "@/app/components/vendors/FollowButton";
@@ -26,24 +27,6 @@ const categoryEmojis = {
   Music: "🎵",
   Accessories: "👜",
 };
-
-function getImageUrl(image) {
-  if (!image) return "";
-
-  if (
-    (image.startsWith("http://") || image.startsWith("https://")) &&
-    !image.includes("/products/")
-  ) {
-    return image;
-  }
-
-  if (image.includes("/products/")) {
-    const filename = image.split("/products/").pop();
-    return `/images/${filename}`;
-  }
-
-  return image;
-}
 
 export default function VendorDetailPage() {
   const { slug } = useParams();

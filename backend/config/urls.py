@@ -3,15 +3,15 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
     TokenRefreshView,
 )
+from users.custom_auth import CustomTokenObtainPairView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
 
-    # JWT Authentication
-    path("api/login/", TokenObtainPairView.as_view()),
+    # JWT Authentication (supports username or email, case-insensitive)
+    path("api/login/", CustomTokenObtainPairView.as_view()),
     path("api/token/refresh/", TokenRefreshView.as_view()),
 
     # User APIs

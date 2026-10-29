@@ -30,6 +30,8 @@ import {
   X,
 } from "lucide-react";
 
+import { getImageUrl } from "@/lib/imageHelper";
+
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
 
@@ -39,14 +41,6 @@ const formatPrice = (price) =>
     currency: "INR",
     maximumFractionDigits: 2,
   }).format(Number(price || 0));
-
-const getImageUrl = (image) => {
-  if (!image) return "";
-  if (image.startsWith("http://") || image.startsWith("https://")) {
-    return image;
-  }
-  return `${API_BASE_URL.replace(/\/$/, "")}/${image.replace(/^\//, "")}`;
-};
 
 export default function ManageProducts() {
   const { isLoggedIn } = useAuth();
@@ -279,6 +273,30 @@ export default function ManageProducts() {
             </div>
           )}
 
+          {products.some((p) => p.is_plan_locked) && (
+            <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-slate-700 bg-slate-900/80 p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-800 text-slate-400 border border-slate-700">
+                  <Package size={18} />
+                </span>
+                <div>
+                  <p className="text-sm font-semibold text-white">
+                    Some products exceed your current subscription limit
+                  </p>
+                  <p className="text-xs text-slate-400">
+                    Products beyond your plan limit are displayed in grey below and hidden from public gallery/store until you upgrade.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="/subscription"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-violet-950/40 transition hover:bg-violet-500"
+              >
+                Upgrade Plan <ArrowUpRight size={14} />
+              </Link>
+            </div>
+          )}
+
           {/* Search and listing table */}
           <section className="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#11162A]">
             <div className="flex flex-col justify-between gap-4 border-b border-white/[0.07] p-5 sm:flex-row sm:items-center sm:px-6">
@@ -363,10 +381,16 @@ export default function ManageProducts() {
                     </thead>
 
                     <tbody className="divide-y divide-white/[0.06]">
-                      {filteredProducts.map((product) => (
+                      {filteredProducts.map((product) => {
+                        const isLocked = product.is_plan_locked;
+                        return (
                         <tr
                           key={product.id}
-                          className="transition hover:bg-white/[0.025]"
+                          className={`transition ${
+                            isLocked
+                              ? "bg-slate-900/60 opacity-60 grayscale hover:opacity-85"
+                              : "hover:bg-white/[0.025]"
+                          }`}
                         >
                           <td className="max-w-[360px] px-6 py-4">
                             <div className="flex items-center gap-3">
@@ -384,9 +408,16 @@ export default function ManageProducts() {
                                 )}
                               </div>
                               <div className="min-w-0">
-                                <p className="truncate text-sm font-medium text-white">
-                                  {product.title || "Untitled product"}
-                                </p>
+                                <div className="flex items-center gap-2">
+                                  <p className={`truncate text-sm font-medium ${isLocked ? "text-slate-400" : "text-white"}`}>
+                                    {product.title || "Untitled product"}
+                                  </p>
+                                  {isLocked && (
+                                    <span className="shrink-0 rounded-md border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400">
+                                      Greyed
+                                    </span>
+                                  )}
+                                </div>
                                 <p className="mt-1 text-xs text-slate-500">
                                   Product ID: {product.id}
                                 </p>
@@ -394,7 +425,7 @@ export default function ManageProducts() {
                             </div>
                           </td>
 
-                          <td className="whitespace-nowrap px-6 py-4 text-sm font-semibold text-violet-300">
+                          <td className={`whitespace-nowrap px-6 py-4 text-sm font-semibold ${isLocked ? "text-slate-500" : "text-violet-300"}`}>
                             {formatPrice(product.price)}
                           </td>
 
@@ -406,26 +437,32 @@ export default function ManageProducts() {
                           </td>
 
                           <td className="whitespace-nowrap px-6 py-4">
-                            <button
-                              type="button"
-                              onClick={() => handleToggleActive(product)}
-                              disabled={busyProduct === product.id}
-                              aria-label={`Mark ${product.title} ${
-                                product.is_active ? "inactive" : "active"
-                              }`}
-                              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 ${
-                                product.is_active
-                                  ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/15"
-                                  : "border-slate-400/15 bg-slate-400/[0.07] text-slate-400 hover:bg-slate-400/10"
-                              }`}
-                            >
-                              {product.is_active ? (
-                                <CheckCircle2 size={13} />
-                              ) : (
-                                <XCircle size={13} />
-                              )}
-                              {product.is_active ? "Active" : "Inactive"}
-                            </button>
+                            {isLocked ? (
+                              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800/90 px-3 py-1.5 text-xs font-medium text-slate-400">
+                                Plan limit exceeded (Hidden)
+                              </span>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleToggleActive(product)}
+                                disabled={busyProduct === product.id}
+                                aria-label={`Mark ${product.title} ${
+                                  product.is_active ? "inactive" : "active"
+                                }`}
+                                className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition disabled:opacity-50 ${
+                                  product.is_active
+                                    ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300 hover:bg-emerald-400/15"
+                                    : "border-slate-400/15 bg-slate-400/[0.07] text-slate-400 hover:bg-slate-400/10"
+                                }`}
+                              >
+                                {product.is_active ? (
+                                  <CheckCircle2 size={13} />
+                                ) : (
+                                  <XCircle size={13} />
+                                )}
+                                {product.is_active ? "Active" : "Inactive"}
+                              </button>
+                            )}
                           </td>
 
                           <td className="whitespace-nowrap px-6 py-4">
@@ -456,15 +493,18 @@ export default function ManageProducts() {
                             </div>
                           </td>
                         </tr>
-                      ))}
+                      );
+                    })}
                     </tbody>
                   </table>
                 </div>
 
                 {/* Responsive product cards */}
                 <div className="divide-y divide-white/[0.06] md:hidden">
-                  {filteredProducts.map((product) => (
-                    <article key={product.id} className="p-4">
+                  {filteredProducts.map((product) => {
+                    const isLocked = product.is_plan_locked;
+                    return (
+                    <article key={product.id} className={`p-4 transition ${isLocked ? "bg-slate-900/50 opacity-60 grayscale" : ""}`}>
                       <div className="flex gap-3">
                         <div className="h-20 w-20 shrink-0 overflow-hidden rounded-xl border border-white/[0.07] bg-[#0C1122]">
                           {product.image ? (
@@ -481,27 +521,40 @@ export default function ManageProducts() {
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          <p className="break-words text-sm font-semibold text-white">
-                            {product.title || "Untitled product"}
-                          </p>
-                          <p className="mt-1 text-sm font-semibold text-violet-300">
+                          <div className="flex items-center gap-2">
+                            <p className={`break-words text-sm font-semibold ${isLocked ? "text-slate-400" : "text-white"}`}>
+                              {product.title || "Untitled product"}
+                            </p>
+                            {isLocked && (
+                              <span className="shrink-0 rounded-md border border-slate-700 bg-slate-800 px-1.5 py-0.5 text-[10px] text-slate-400">
+                                Greyed
+                              </span>
+                            )}
+                          </div>
+                          <p className={`mt-1 text-sm font-semibold ${isLocked ? "text-slate-500" : "text-violet-300"}`}>
                             {formatPrice(product.price)}
                           </p>
                           <p className="mt-1 text-xs text-slate-500">
                             {product.views_count ?? 0} views
                           </p>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleActive(product)}
-                            disabled={busyProduct === product.id}
-                            className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs ${
-                              product.is_active
-                                ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
-                                : "border-slate-400/15 bg-slate-400/[0.07] text-slate-400"
-                            }`}
-                          >
-                            {product.is_active ? "Active" : "Inactive"}
-                          </button>
+                          {isLocked ? (
+                            <span className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-slate-700 bg-slate-800/90 px-2 py-0.5 text-[11px] text-slate-400">
+                              Plan limit exceeded (Hidden)
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleToggleActive(product)}
+                              disabled={busyProduct === product.id}
+                              className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs ${
+                                product.is_active
+                                  ? "border-emerald-400/20 bg-emerald-400/10 text-emerald-300"
+                                  : "border-slate-400/15 bg-slate-400/[0.07] text-slate-400"
+                              }`}
+                            >
+                              {product.is_active ? "Active" : "Inactive"}
+                            </button>
+                          )}
                         </div>
                       </div>
 
@@ -522,7 +575,8 @@ export default function ManageProducts() {
                         </button>
                       </div>
                     </article>
-                  ))}
+                  );
+                })}
                 </div>
               </>
             )}

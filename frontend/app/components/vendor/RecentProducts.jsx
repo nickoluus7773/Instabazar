@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { getVendorProducts } from "@/lib/vendorApi";
 import { useAuth } from "@/context/AuthContext";
+import { getImageUrl } from "@/lib/imageHelper";
 
 export default function RecentProducts() {
   const { isLoggedIn } = useAuth();
@@ -83,7 +84,7 @@ export default function RecentProducts() {
                         <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
                           {product.image ? (
                             <img
-                              src={product.image}
+                              src={getImageUrl(product.image)}
                               alt={product.title}
                               className="w-full h-full object-cover"
                             />

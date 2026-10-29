@@ -46,9 +46,18 @@ export function AuthProvider({ children }) {
       },
     })
       .then((response) => {
-        if (!cancelled && (response.ok || response.status === 404)) {
-          setIsVendor(response.ok);
-          setRoleResolved(true);
+        if (!cancelled) {
+          if (response.status === 401) {
+            localStorage.removeItem("accessToken");
+            setIsLoggedIn(false);
+            setIsVendor(false);
+            setRoleResolved(true);
+            return;
+          }
+          if (response.ok || response.status === 404) {
+            setIsVendor(response.ok);
+            setRoleResolved(true);
+          }
         }
       })
       .catch(() => {});

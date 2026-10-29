@@ -6,6 +6,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { updateProduct, getVendorProducts } from "@/lib/vendorApi";
+import { getImageUrl } from "@/lib/imageHelper";
 import Navbar from "@/app/components/layout/Navbar";
 import {
   ArrowLeft,
@@ -31,14 +32,6 @@ const inputClass =
   "w-full rounded-xl border border-white/10 bg-[#0C1122] px-4 py-3 text-sm text-white outline-none transition placeholder:text-slate-600 focus:border-violet-400/60 focus:ring-2 focus:ring-violet-500/15";
 
 const labelClass = "mb-2 block text-sm font-medium text-slate-300";
-
-const getImageUrl = (image) => {
-  if (!image) return "";
-  if (image.startsWith("http://") || image.startsWith("https://") || image.startsWith("blob:")) {
-    return image;
-  }
-  return `${API_BASE_URL.replace(/\/$/, "")}/${image.replace(/^\//, "")}`;
-};
 
 export default function EditProduct() {
   const { isLoggedIn } = useAuth();
@@ -337,7 +330,7 @@ export default function EditProduct() {
 
                       <div>
                         <label htmlFor="instagram_post_url" className={labelClass}>
-                          Instagram product post URL <span className="text-violet-300">*</span>
+                          Instagram product post URL <span className="text-xs text-slate-400 font-normal">(Optional)</span>
                         </label>
                         <input
                           id="instagram_post_url"
@@ -345,7 +338,6 @@ export default function EditProduct() {
                           name="instagram_post_url"
                           value={formData.instagram_post_url}
                           onChange={handleChange}
-                          required
                           className={inputClass}
                           placeholder="https://www.instagram.com/p/your-product-post/"
                         />
@@ -421,6 +413,24 @@ export default function EditProduct() {
                           className={inputClass}
                           placeholder="e.g. M or Free Size"
                         />
+                      </div>
+
+                      <div>
+                        <label htmlFor="instagram_post_url" className={labelClass}>
+                          Instagram Post or Reel URL
+                        </label>
+                        <input
+                          id="instagram_post_url"
+                          type="url"
+                          name="instagram_post_url"
+                          value={formData.instagram_post_url}
+                          onChange={handleChange}
+                          className={inputClass}
+                          placeholder="https://www.instagram.com/p/..."
+                        />
+                        <p className="mt-1 text-xs text-slate-500">
+                          Direct Instagram post/reel link where buyers can connect via DM.
+                        </p>
                       </div>
                     </div>
                   </section>

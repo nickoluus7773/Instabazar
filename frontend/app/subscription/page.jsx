@@ -5,20 +5,25 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Navbar from "../components/layout/Navbar";
 import {
+  AlertTriangle,
   ArrowRight,
+  CalendarDays,
   Check,
+  Clock3,
   Crown,
   LoaderCircle,
   LockKeyhole,
   Rocket,
   Sparkles,
   Store,
-  Zap,
   X,
+  XCircle,
+  Zap,
 } from "lucide-react";
 
 import API_BASE_URL from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
+import { cancelSubscription } from "@/lib/vendorApi";
 
 const planStyles = {
   free: {
@@ -111,6 +116,8 @@ export default function SubscriptionPage() {
   const [currentSubscription, setCurrentSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState(null);
 
@@ -199,6 +206,45 @@ export default function SubscriptionPage() {
   useEffect(() => {
     loadPageData();
   }, [loadPageData]);
+
+  const formatDate = (date) => {
+    if (!date) return "Not available";
+    return new Date(date).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  async function handleCancelSubscription() {
+    const token =
+      typeof window !== "undefined"
+        ? localStorage.getItem("accessToken")
+        : null;
+
+    if (!token) {
+      setError("Please log in to cancel your subscription.");
+      return;
+    }
+
+    setCancelling(true);
+    setError("");
+    setNotice(null);
+
+    try {
+      const result = await cancelSubscription(token);
+      setNotice({
+        type: "success",
+        text: result.message || "Subscription cancelled successfully.",
+      });
+      setShowCancelConfirm(false);
+      await loadPageData();
+    } catch (err) {
+      setError(err.message || "Could not cancel subscription.");
+    } finally {
+      setCancelling(false);
+    }
+  }
 
   const selectedPlan = plans.find((plan) => plan.code === selectedCode);
 
@@ -419,29 +465,94 @@ export default function SubscriptionPage() {
         {!loading && !error && plans.length > 0 && (
           <>
             {isVendor && currentPlan && (
-              <div className="mx-auto mt-6 flex max-w-5xl flex-wrap items-center justify-between gap-3 rounded-xl border border-purple-400/20 bg-[#11182b]/90 px-4 py-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-                    Your current plan
-                  </p>
-                  <p className="mt-1 font-bold">
-                    {currentPlan.name}
-                    {currentSubscription?.status && (
-                      <span className="ml-2 text-xs font-medium capitalize text-emerald-300">
-                        {currentSubscription.status}
+              <div className="mx-auto mt-6 max-w-5xl overflow-hidden rounded-2xl border border-purple-400/20 bg-[#11182b]/95 shadow-xl">
+                <div className="flex flex-wrap items-center justify-between gap-4 p-5 sm:px-6">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                      Your current plan
+                    </p>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="text-lg font-bold text-white">
+                        {currentPlan.name}
                       </span>
+                      {currentSubscription?.is_cancelled ? (
+                        <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2.5 py-0.5 text-xs font-semibold text-amber-300">
+                          Cancelled ({currentSubscription.days_remaining ?? 0}d left)
+                        </span>
+                      ) : currentSubscription?.status ? (
+                        <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2.5 py-0.5 text-xs font-semibold capitalize text-emerald-300">
+                          {currentSubscription.status}
+                        </span>
+                      ) : null}
+                    </div>
+                    {currentSubscription?.expires_at && (
+                      <p className="mt-1 flex items-center gap-1.5 text-xs text-slate-400">
+                        <CalendarDays size={13} />
+                        {currentSubscription.is_cancelled ? "Access ends" : "Renews"}: {formatDate(currentSubscription.expires_at)}
+                      </p>
                     )}
-                  </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={loadPageData}
+                    className="inline-flex items-center gap-2 rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-slate-300 transition hover:bg-white/[0.08]"
+                  >
+                    <LoaderCircle size={15} />
+                    Refresh plan
+                  </button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={loadPageData}
-                  className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-sm text-slate-300 hover:bg-white/5"
-                >
-                  <LoaderCircle size={15} />
-                  Refresh plan
-                </button>
+                {/* Paid Subscription: Cancellation Details & Countdown or Cancel Button */}
+                {currentSubscription && Number(currentPlan?.monthly_price) > 0 && (
+                  <div className="border-t border-white/[0.08] bg-[#0c1222] p-5 sm:px-6">
+                    {currentSubscription.is_cancelled ? (
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+                        <div>
+                          <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-400/20 px-2.5 py-1 text-xs font-semibold text-amber-300">
+                            <Clock3 size={13} />
+                            CANCELLATION CONFIRMED
+                          </div>
+                          <h4 className="mt-2 text-sm sm:text-base font-bold text-white">
+                            Access active until end of billing cycle
+                          </h4>
+                          <p className="mt-1 text-xs sm:text-sm text-slate-300">
+                            Your paid benefits will continue for another{" "}
+                            <span className="font-bold text-amber-300">
+                              {currentSubscription.days_remaining ?? 0} days
+                            </span>{" "}
+                            until {formatDate(currentSubscription.expires_at)}. After that, your store will automatically switch to the Free plan.
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-center justify-center rounded-xl border border-amber-400/20 bg-[#090D1A] px-5 py-2.5 shrink-0">
+                          <span className="text-2xl sm:text-3xl font-extrabold text-amber-300">
+                            {currentSubscription.days_remaining ?? 0}
+                          </span>
+                          <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            Days Remaining
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-200">Cancel subscription</p>
+                          <p className="mt-0.5 text-xs text-slate-400">
+                            If you cancel, you will keep all benefits until {formatDate(currentSubscription.expires_at)}, after which your plan will switch to Free.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowCancelConfirm(true)}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-xs font-semibold text-rose-300 hover:bg-rose-500/20 transition shrink-0"
+                        >
+                          <XCircle size={14} />
+                          Cancel subscription
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
@@ -662,10 +773,10 @@ export default function SubscriptionPage() {
                   {notice.text}
                   {notice.type === "success" && isVendor && (
                     <Link
-                      href="/vendor/subscription"
+                      href="/vendor/dashboard"
                       className="ml-2 inline-flex items-center gap-1 font-bold underline underline-offset-4"
                     >
-                      View subscription <ArrowRight size={14} />
+                      View in dashboard <ArrowRight size={14} />
                     </Link>
                   )}
                 </div>
@@ -687,6 +798,49 @@ export default function SubscriptionPage() {
             Secure account access
           </p>
         </footer>
+
+        {showCancelConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm">
+            <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0E1528] p-6 text-white shadow-2xl">
+              <div className="flex items-center gap-3 text-amber-400">
+                <AlertTriangle size={24} />
+                <h3 className="text-lg font-bold">Cancel your subscription?</h3>
+              </div>
+              <div className="mt-3 space-y-2 text-sm text-slate-300">
+                <p>
+                  You will keep all your plan benefits for the remaining{" "}
+                  <span className="font-bold text-amber-300">
+                    {currentSubscription?.days_remaining ?? 30} days
+                  </span>{" "}
+                  until {formatDate(currentSubscription?.expires_at)}.
+                </p>
+                <p className="mt-2 text-xs text-slate-400">
+                  After this date, your subscription will expire and your account will automatically revert to the Free plan.
+                </p>
+              </div>
+
+              <div className="mt-6 flex flex-wrap justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowCancelConfirm(false)}
+                  disabled={cancelling}
+                  className="rounded-xl border border-white/10 px-4 py-2.5 text-sm font-semibold text-slate-300 hover:bg-white/5"
+                >
+                  Keep subscription
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelSubscription}
+                  disabled={cancelling}
+                  className="inline-flex items-center gap-2 rounded-xl bg-rose-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-rose-950/40 hover:bg-rose-500 disabled:opacity-50"
+                >
+                  {cancelling && <LoaderCircle size={15} className="animate-spin" />}
+                  {cancelling ? "Cancelling..." : "Confirm cancellation"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
