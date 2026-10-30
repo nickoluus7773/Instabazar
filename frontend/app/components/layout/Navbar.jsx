@@ -11,6 +11,7 @@ export default function Navbar() {
   const { isLoggedIn, isVendor, roleResolved, logout } = useAuth();
   const { favorites } = useFavorites();
   const pathname = usePathname();
+  const showPlansLink = !isLoggedIn;
 
   const isActive = (href) =>
     href === "/"
@@ -44,7 +45,11 @@ export default function Navbar() {
             { href: "/", label: "Home" },
             { href: "/gallery", label: "Gallery" },
             { href: "/vendors", label: "Vendors" },
-            { href: "/subscription", label: isVendor ? "Subscription" : "Plans" },
+            ...(isVendor
+              ? [{ href: "/subscription", label: "Subscription" }]
+              : showPlansLink
+                ? [{ href: "/subscription", label: "Plans" }]
+                : []),
           ].map((item) => (
             <Link
               key={item.href}
@@ -174,7 +179,7 @@ export default function Navbar() {
               Vendors
             </Link>
 
-            <Link
+            {isVendor && <Link
               href="/subscription"
               onClick={() => setMobileMenuOpen(false)}
               aria-current={isActive("/subscription") ? "page" : undefined}
@@ -183,8 +188,20 @@ export default function Navbar() {
                 : "border-transparent text-white hover:bg-white/10"
                 }`}
             >
-              {isVendor ? "Subscription" : "Plans"}
-            </Link>
+              Subscription
+            </Link>}
+
+            {showPlansLink && <Link
+              href="/subscription"
+              onClick={() => setMobileMenuOpen(false)}
+              aria-current={isActive("/subscription") ? "page" : undefined}
+              className={`rounded-lg px-3 py-2.5 border-l-2 transition-colors ${isActive("/subscription")
+                ? "border-[#F5AE30] bg-white/10 text-[#F5AE30]"
+                : "border-transparent text-white hover:bg-white/10"
+                }`}
+            >
+              Plans
+            </Link>}
 
             {isLoggedIn && !isVendor && (
               <Link
