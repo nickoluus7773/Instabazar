@@ -312,7 +312,11 @@ const [loading, setLoading] = useState(true);
             {/* CTA Buttons: Instagram DM + Save */}
             <div className="flex items-center gap-3 pt-2">
               <a
-                href="https://www.instagram.com/instabazaar.official/"
+                href={
+                  product.instagram_post_url && product.instagram_post_url.trim()
+                    ? product.instagram_post_url.trim()
+                    : "https://www.instagram.com/instabazaar.official/"
+                }
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 sm:flex-initial sm:px-8 py-3.5 bg-gradient-to-r from-orange-500 via-orange-600 to-red-500 hover:from-orange-600 hover:to-red-600 text-white font-bold rounded-2xl text-sm shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 text-center"

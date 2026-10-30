@@ -414,24 +414,6 @@ export default function EditProduct() {
                           placeholder="e.g. M or Free Size"
                         />
                       </div>
-
-                      <div>
-                        <label htmlFor="instagram_post_url" className={labelClass}>
-                          Instagram Post or Reel URL
-                        </label>
-                        <input
-                          id="instagram_post_url"
-                          type="url"
-                          name="instagram_post_url"
-                          value={formData.instagram_post_url}
-                          onChange={handleChange}
-                          className={inputClass}
-                          placeholder="https://www.instagram.com/p/..."
-                        />
-                        <p className="mt-1 text-xs text-slate-500">
-                          Direct Instagram post/reel link where buyers can connect via DM.
-                        </p>
-                      </div>
                     </div>
                   </section>
 

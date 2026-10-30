@@ -435,8 +435,7 @@ class Command(BaseCommand):
 
                 # Category
                 cat, _ = Category.objects.get_or_create(
-                    categoryName=cat_name,
-                    defaults={"categoryDescription": f"{cat_name} collection"}
+                    categoryName=cat_name
                 )
 
                 # Product
