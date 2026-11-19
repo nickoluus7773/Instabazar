@@ -28,6 +28,13 @@ class SubscriptionPlan(models.Model):
         blank=True,
     )
 
+    max_broadcasts_per_month = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        default=0,
+        help_text="Monthly broadcast limit. Zero disables broadcasts; blank is unlimited.",
+    )
+
     analytics_level = models.CharField(
         max_length=20,
         choices=[

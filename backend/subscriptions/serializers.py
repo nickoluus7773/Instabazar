@@ -11,6 +11,7 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             "name",
             "monthly_price",
             "max_products",
+            "max_broadcasts_per_month",
             "analytics_level",
             "instagram_redirect",
             "product_badges",

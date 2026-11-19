@@ -35,6 +35,7 @@ class SubscriptionServiceTests(TestCase):
             name="Free",
             monthly_price=Decimal("0.00"),
             max_products=10,
+            max_broadcasts_per_month=0,
             analytics_level="basic",
         )
         cls.standard = SubscriptionPlan.objects.create(
@@ -42,6 +43,7 @@ class SubscriptionServiceTests(TestCase):
             name="Standard",
             monthly_price=Decimal("149.00"),
             max_products=50,
+            max_broadcasts_per_month=0,
             analytics_level="standard",
             instagram_redirect=True,
             product_badges=True,
@@ -51,6 +53,7 @@ class SubscriptionServiceTests(TestCase):
             name="Advanced",
             monthly_price=Decimal("249.00"),
             max_products=None,
+            max_broadcasts_per_month=20,
             analytics_level="advanced",
             instagram_redirect=True,
             product_badges=True,
@@ -311,6 +314,7 @@ class SubscriptionAPITests(APITestCase):
             name="Free",
             monthly_price=Decimal("0.00"),
             max_products=10,
+            max_broadcasts_per_month=0,
             analytics_level="basic",
         )
         cls.standard = SubscriptionPlan.objects.create(
@@ -318,6 +322,7 @@ class SubscriptionAPITests(APITestCase):
             name="Standard",
             monthly_price=Decimal("149.00"),
             max_products=50,
+            max_broadcasts_per_month=0,
             analytics_level="standard",
             instagram_redirect=True,
             product_badges=True,
@@ -327,6 +332,7 @@ class SubscriptionAPITests(APITestCase):
             name="Advanced",
             monthly_price=Decimal("249.00"),
             max_products=None,
+            max_broadcasts_per_month=20,
             analytics_level="advanced",
             instagram_redirect=True,
             product_badges=True,
@@ -350,6 +356,10 @@ class SubscriptionAPITests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 3)
+        plans = {plan["code"]: plan for plan in response.data}
+        self.assertEqual(plans["free"]["max_broadcasts_per_month"], 0)
+        self.assertEqual(plans["standard"]["max_broadcasts_per_month"], 0)
+        self.assertEqual(plans["advanced"]["max_broadcasts_per_month"], 20)
 
     def test_current_subscription_defaults_to_free(self):
         response = self.client.get("/subscriptions/current/")
