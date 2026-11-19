@@ -57,7 +57,6 @@ class SubscriptionServiceTests(TestCase):
             analytics_level="advanced",
             instagram_redirect=True,
             product_badges=True,
-            ai_tools=True,
             bazaar_choice=True,
         )
 
@@ -108,9 +107,6 @@ class SubscriptionServiceTests(TestCase):
         self.assertTrue(
             vendor_has_feature(self.vendor, "instagram_redirect")
         )
-        self.assertFalse(
-            vendor_has_feature(self.vendor, "ai_tools")
-        )
 
     def test_expired_subscription_falls_back_to_free(self):
         subscription = self.create_subscription(
@@ -144,7 +140,6 @@ class SubscriptionServiceTests(TestCase):
         self.create_subscription(self.advanced)
 
         self.assertIsNone(get_effective_plan(self.vendor).max_products)
-        self.assertTrue(vendor_has_feature(self.vendor, "ai_tools"))
         self.assertTrue(vendor_has_feature(self.vendor, "bazaar_choice"))
 
     
@@ -336,7 +331,6 @@ class SubscriptionAPITests(APITestCase):
             analytics_level="advanced",
             instagram_redirect=True,
             product_badges=True,
-            ai_tools=True,
             bazaar_choice=True,
         )
 

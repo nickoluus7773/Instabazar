@@ -68,7 +68,6 @@ function getFeatures(plan) {
     },
     { label: "Instagram redirect", included: !!plan.instagram_redirect },
     { label: "Product badges", included: !!plan.product_badges },
-    { label: "AI tools", included: !!plan.ai_tools },
     { label: "Bazaar Choice", included: !!plan.bazaar_choice },
     {
       label: "Vendor Broadcasts",

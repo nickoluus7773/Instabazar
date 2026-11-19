@@ -16,7 +16,6 @@ class Command(BaseCommand):
                 "analytics_level": "basic",
                 "instagram_redirect": False,
                 "product_badges": False,
-                "ai_tools": False,
                 "bazaar_choice": False,
             },
             {
@@ -28,7 +27,6 @@ class Command(BaseCommand):
                 "analytics_level": "standard",
                 "instagram_redirect": True,
                 "product_badges": True,
-                "ai_tools": False,
                 "bazaar_choice": False,
             },
             {
@@ -40,7 +38,6 @@ class Command(BaseCommand):
                 "analytics_level": "advanced",
                 "instagram_redirect": True,
                 "product_badges": True,
-                "ai_tools": True,
                 "bazaar_choice": True,
             },
         ]

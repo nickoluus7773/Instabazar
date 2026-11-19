@@ -123,7 +123,6 @@ def vendor_has_feature(vendor, feature_name):
     allowed_features = {
         "instagram_redirect",
         "product_badges",
-        "ai_tools",
         "bazaar_choice",
     }
 

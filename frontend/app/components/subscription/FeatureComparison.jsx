@@ -6,7 +6,6 @@ const comparisonRows = [
   ["Follow Button", true, true, true],
   ["Instagram Redirect", false, true, true],
   ["Product Badges", false, true, true],
-  ["AI Tools", false, false, true],
   ["Bazaar Choice Badge", false, false, true],
 ];
 

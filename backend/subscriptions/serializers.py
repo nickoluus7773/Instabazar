@@ -15,7 +15,6 @@ class SubscriptionPlanSerializer(serializers.ModelSerializer):
             "analytics_level",
             "instagram_redirect",
             "product_badges",
-            "ai_tools",
             "bazaar_choice",
         ]
 

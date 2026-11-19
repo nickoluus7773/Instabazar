@@ -45,7 +45,6 @@ class VendorAnalyticsSubscriptionTests(TestCase):
             analytics_level="advanced",
             instagram_redirect=True,
             product_badges=True,
-            ai_tools=True,
             bazaar_choice=True,
         )
 

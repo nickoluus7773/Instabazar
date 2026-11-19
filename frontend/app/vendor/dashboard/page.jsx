@@ -882,7 +882,7 @@ export default function VendorDashboard() {
                   </div>
                 )}
 
-                <div className="mt-6 grid gap-3 border-t border-white/[0.07] pt-5 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="mt-6 grid gap-3 border-t border-white/[0.07] pt-5 sm:grid-cols-2 xl:grid-cols-3">
                   <div className="flex items-center gap-2 text-sm text-slate-300">
                     <CheckCircle2 size={16} className="shrink-0 text-emerald-400" />
                     Product listings
@@ -902,14 +902,6 @@ export default function VendorDashboard() {
                       <LockKeyhole size={16} className="shrink-0 text-slate-500" />
                     )}
                     Instagram redirect
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-slate-300">
-                    {plan?.ai_tools ? (
-                      <CheckCircle2 size={16} className="shrink-0 text-emerald-400" />
-                    ) : (
-                      <LockKeyhole size={16} className="shrink-0 text-slate-500" />
-                    )}
-                    AI tools
                   </div>
                 </div>
               </Panel>

@@ -47,7 +47,6 @@ class SubscriptionPlan(models.Model):
 
     instagram_redirect = models.BooleanField(default=False)
     product_badges = models.BooleanField(default=False)
-    ai_tools = models.BooleanField(default=False)
     bazaar_choice = models.BooleanField(default=False)
 
     is_active = models.BooleanField(default=True)

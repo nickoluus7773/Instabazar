@@ -57,11 +57,11 @@ The management command `seed_subscription_plans` creates or updates the followin
 
 | Plan | Default monthly price | Product capacity | Analytics | Other configured entitlements |
 |---|---:|---:|---|---|
-| Free | ₹0 | 10 | Basic | No Instagram redirect, badges, AI tools, or Bazaar Choice flag |
+| Free | ₹0 | 10 | Basic | No Instagram redirect, badges, or Bazaar Choice flag |
 | Standard | ₹149 | 50 | Standard | Instagram redirect and product badges |
-| Advanced | ₹249 | Unlimited | Advanced | Redirect, badges, AI tools, and Bazaar Choice flags |
+| Advanced | ₹249 | Unlimited | Advanced | Redirect, badges, and Bazaar Choice flags |
 
-Paid subscriptions are modeled with pending, active, expired, and cancelled states. Payment activation is intended to follow provider verification. The service layer sets a 30-day paid period and applies a plan access cutoff at noon on the day after the stored expiry date. A scheduled management command can mark subscriptions expired. The AI tools and Bazaar Choice fields are plan entitlements in the data model; this repository should not be presented as containing a full AI feature unless that functionality is implemented elsewhere.
+Paid subscriptions are modeled with pending, active, expired, and cancelled states. Payment activation is intended to follow provider verification. The service layer sets a 30-day paid period and applies a plan access cutoff at noon on the day after the stored expiry date. A scheduled management command can mark subscriptions expired. Bazaar Choice is a plan entitlement in the data model; this repository should not be presented as containing a complete customer-facing workflow unless that functionality is implemented elsewhere.
 
 ## 4. Typical user journeys
 
@@ -272,7 +272,7 @@ Instabazar1/
 - Product stock is stored, but stock reservation/decrement and order lifecycle are not implemented in the visible product model/API.
 - Several dashboard fields are explicitly returned as `None` or `0` (for example views, orders, revenue, ratings, and product `views_count`). Do not describe these as measured production analytics. Some analysis trend values are calculated from wishlist/product/follower counts rather than recorded page-view events.
 - Reviews are general user text reviews in the backend model; they are not linked to a vendor or product and have no rating field in that model.
-- Product badge, AI tools, and Bazaar Choice appear as plan entitlement flags. Their full customer-facing workflows are not established by these fields alone.
+- Product badges and Bazaar Choice appear as plan entitlement flags. Their full customer-facing workflows are not established by these fields alone.
 - Razorpay settings, order creation, and payment verification endpoints exist. Live payments require valid credentials and provider configuration.
 - The seed plan values are defaults, not a guarantee that a deployed database currently has those values.
 - `frontend/public/images` and `backend/media` both contain image assets. Backend model save methods copy uploads to frontend public images on a best-effort basis; media serving and deployment behavior should be configured for the target hosting environment.
