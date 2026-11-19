@@ -70,6 +70,11 @@ function getFeatures(plan) {
     { label: "Product badges", included: !!plan.product_badges },
     { label: "AI tools", included: !!plan.ai_tools },
     { label: "Bazaar Choice", included: !!plan.bazaar_choice },
+    {
+      label: "Vendor Broadcasts",
+      included: plan.code === "advanced" && Number(plan.max_broadcasts_per_month || 0) > 0,
+      availability: plan.code === "advanced" && Number(plan.max_broadcasts_per_month || 0) > 0 ? "Included" : "Not Available",
+    },
   ];
 }
 
@@ -668,7 +673,7 @@ export default function SubscriptionPage() {
                                 <X size={10} />
                               )}
                             </span>
-                            {feature.label}
+                            {feature.label}{feature.availability ? ` — ${feature.availability}` : ""}
                           </li>
                         ))}
                       </ul>

@@ -24,6 +24,7 @@ import {
   LoaderCircle,
   Users,
   BarChart3,
+  Megaphone,
 } from "lucide-react";
 
 import { useAuth } from "@/context/AuthContext";
@@ -50,6 +51,7 @@ const navigation = [
   },
   { id: "profile", label: "Store Profile", href: "/vendor/profile", icon: Store },
   { id: "followers", label: "Followers", href: "/vendor/dashboard?tab=followers", icon: Users },
+  { id: "broadcasts", label: "Broadcasts", href: "/vendor/broadcasts", icon: Megaphone },
   { id: "subscription", label: "Subscription", href: "/subscription", icon: CreditCard },
 ];
 
@@ -582,6 +584,8 @@ export default function VendorDashboard() {
 
               <nav className="space-y-1">
                 {navigation.map(({ id, label, href, icon: Icon }) => {
+                  if (id === "broadcasts" && (plan?.code !== "advanced" || vendor?.verification_status !== "verified")) return null;
+
                   const isTabActive =
                     (id === "overview" && activeTab === "overview") ||
                     (id === "wishlist" && activeTab === "wishlist") ||

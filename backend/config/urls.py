@@ -27,6 +27,7 @@ urlpatterns = [
     # Reviews
     path("api/", include("reviews.urls")),
     path("subscriptions/", include("subscriptions.urls")),
+    path("api/broadcasts/", include("broadcasts.urls")),
 
 ]
 
